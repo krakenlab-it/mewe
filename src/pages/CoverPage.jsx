@@ -13,7 +13,6 @@ export function CoverPage({ onEnter }) {
         </p>
         <div className="hero-actions">
           <button onClick={onEnter}>Entrar a la plataforma</button>
-          <span className="muted">Supabase · Vite · React</span>
         </div>
       </section>
 
