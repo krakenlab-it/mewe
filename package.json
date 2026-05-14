@@ -1,0 +1,24 @@
+{
+  "name": "mewe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ME WE frontend powered by Vite",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5174 --strictPort --open /me_we_plataforma.html",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "vite",
+    "frontend",
+    "mewe"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^8.0.12"
+  }
+}

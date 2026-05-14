@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ME WE — Plataforma</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --primary: #C0573C; --secondary: #7A8C5D; --accent: #E8A87C;
+    --ink: #2D2D2D; --muted: #6B6B6B;
+    --bg-warm: #FBF5EE; --bg-callout: #F4E3D0; --bg-cita: #EDE8DD;
+    --bg-madre: #F0E4D6; --bg-hija: #E8EAD4;
+    --border-soft: #D8C8B5;
+    --zone-cuidado: #F4D7CC; --zone-atencion: #F4E9CC; --zone-sostenida: #E4EDD6;
+    --zone-cuidado-t: #8C3F25; --zone-atencion-t: #8A6A20; --zone-sostenida-t: #5C7340;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-warm); color: var(--ink); line-height: 1.6; min-height: 100vh; padding: 20px; }
+  .container { max-width: 760px; margin: 0 auto; background: white; border-radius: 16px; padding: 32px 28px; box-shadow: 0 2px 20px rgba(45,45,45,0.04); min-height: calc(100vh - 40px); }
+  .container.wide { max-width: 1100px; }
+  @media (max-width: 600px) { body { padding: 0; } .container { border-radius: 0; padding: 24px 20px; min-height: 100vh; } }
+  h1, h2, h3, h4 { font-family: Georgia, "Times New Roman", serif; color: var(--primary); font-weight: 500; }
+  h1 { font-size: 36px; letter-spacing: 2px; margin-bottom: 8px; }
+  h2 { font-size: 26px; margin-bottom: 16px; line-height: 1.3; }
+  h3 { font-size: 20px; margin-bottom: 12px; }
+  h4 { font-size: 17px; margin-bottom: 8px; color: var(--ink); }
+  p { margin-bottom: 16px; font-size: 17px; }
+  .muted { color: var(--muted); font-size: 15px; }
+  .center { text-align: center; }
+  .screen { display: none; animation: fadeIn 0.35s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .portada { text-align: center; padding: 40px 0 24px; }
+  .logo-me { color: var(--primary); font-family: Georgia, serif; font-weight: 500; font-size: 72px; letter-spacing: 4px; }
+  .logo-we { color: var(--secondary); font-family: Georgia, serif; font-weight: 500; font-size: 72px; letter-spacing: 4px; }
+  .portada-sub { color: var(--muted); font-size: 18px; margin-top: 12px; }
+  .dots { color: var(--muted); margin: 32px 0; letter-spacing: 8px; }
+  .btn { display: inline-block; padding: 14px 28px; border-radius: 12px; border: none; font-size: 17px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; text-decoration: none; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #A8492F; transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg-callout); color: var(--primary); }
+  .btn-secondary:hover { background: #ECD4B8; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border-soft); }
+  .btn-block { display: block; width: 100%; margin-bottom: 12px; }
+  .btn-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; min-width: 140px; }
+  .btn-sm { padding: 8px 16px; font-size: 14px; border-radius: 8px; }
+  .callout { background: var(--bg-callout); border-left: 4px solid var(--primary); padding: 18px 20px; border-radius: 8px; margin: 20px 0; font-size: 16px; }
+  .callout-soft { background: var(--bg-cita); border-left: 4px solid var(--secondary); padding: 18px 20px; border-radius: 8px; margin: 20px 0; }
+  .callout strong { color: var(--primary); }
+  .rol-card { background: var(--bg-warm); border: 2px solid var(--border-soft); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
+  .rol-card:hover { border-color: var(--primary); background: #FFFCF6; transform: translateY(-2px); }
+  .rol-card.madre { background: var(--bg-madre); }
+  .rol-card.hija { background: var(--bg-hija); }
+  .rol-card.admin { background: #EDE8DD; }
+  .rol-card h3 { margin-bottom: 8px; }
+  .rol-card p { margin: 0; font-size: 15px; color: var(--muted); }
+  .input-group { margin-bottom: 20px; }
+  .input-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 15px; }
+  .input-group input, .input-group select, .input-group textarea {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border-soft); border-radius: 10px;
+    font-size: 16px; font-family: inherit; background: var(--bg-warm); color: var(--ink);
+  }
+  .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--primary); }
+  .escala-demo { background: var(--bg-cita); border-radius: 12px; padding: 16px; margin: 20px 0; }
+  .escala-demo .item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(216,200,181,0.5); font-size: 15px; }
+  .escala-demo .item:last-child { border-bottom: none; }
+  .escala-demo .emoji { font-size: 22px; margin-right: 12px; min-width: 30px; }
+  .escala-demo .num { font-weight: 500; color: var(--primary); margin-right: 8px; }
+  .progreso-bar { height: 6px; background: var(--bg-cita); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .progreso-fill { height: 100%; background: var(--primary); transition: width 0.4s ease; }
+  .progreso-text { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .test-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft); }
+  .modulo-tag { display: inline-block; background: var(--bg-callout); color: var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+  .modulo-tag.hija-tag { background: var(--bg-hija); color: var(--zone-sostenida-t); }
+  .modulo-titulo { font-size: 22px; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
+  .modulo-sub { color: var(--muted); font-size: 14px; }
+  .pregunta-box { background: var(--bg-warm); border-radius: 14px; padding: 28px 24px; margin-bottom: 24px; border: 1px solid var(--border-soft); }
+  .pregunta-numero { color: var(--primary); font-size: 14px; font-weight: 500; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .pregunta-texto { font-size: 20px; line-height: 1.5; color: var(--ink); }
+  .escala-buttons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+  .escala-btn { background: white; border: 2px solid var(--border-soft); border-radius: 12px; padding: 16px 4px; cursor: pointer; transition: all 0.2s; text-align: center; font-family: inherit; }
+  .escala-btn:hover { border-color: var(--primary); transform: translateY(-2px); background: #FFFCF6; }
+  .escala-btn.selected { border-color: var(--primary); background: var(--bg-callout); }
+  .escala-btn .emoji { font-size: 28px; display: block; margin-bottom: 4px; }
+  .escala-btn .num { font-size: 12px; font-weight: 500; color: var(--primary); display: block; }
+  .escala-btn .label { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
+  @media (max-width: 480px) { .escala-btn { padding: 12px 2px; } .escala-btn .emoji { font-size: 24px; } .escala-btn .label { display: none; } }
+  .nav-buttons { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 8px; }
+  .nav-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 8px 12px; border-radius: 6px; font-family: inherit; }
+  .nav-btn:hover { background: var(--bg-warm); color: var(--ink); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .pausa-box { background: var(--bg-cita); border-radius: 16px; padding: 32px 24px; text-align: center; margin: 24px 0; }
+  .pausa-box h3 { color: var(--secondary); }
+  .reporte-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-soft); }
+  .reporte-section:last-child { border-bottom: none; }
+  .indice-card { background: var(--bg-warm); border-radius: 12px; padding: 18px; margin-bottom: 12px; border-left: 4px solid var(--border-soft); }
+  .indice-card.zona-cuidado { border-left-color: #C97A5F; background: #FBEAE3; }
+  .indice-card.zona-atencion { border-left-color: var(--accent); background: #FBF3E0; }
+  .indice-card.zona-sostenida { border-left-color: var(--secondary); background: #F0F4E5; }
+  .indice-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+  .indice-nombre { font-weight: 500; font-size: 16px; color: var(--ink); }
+  .indice-score { font-size: 24px; font-weight: 500; font-family: Georgia, serif; color: var(--primary); }
+  .indice-zona { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 8px; }
+  .zona-cuidado .indice-zona { background: var(--zone-cuidado); color: var(--zone-cuidado-t); }
+  .zona-atencion .indice-zona { background: var(--zone-atencion); color: var(--zone-atencion-t); }
+  .zona-sostenida .indice-zona { background: var(--zone-sostenida); color: var(--zone-sostenida-t); }
+  .indice-texto { color: var(--ink); font-size: 15px; line-height: 1.6; margin-top: 8px; }
+  .chart-container { background: var(--bg-warm); border-radius: 14px; padding: 20px; margin: 20px 0; }
+  .chart-titulo { font-size: 16px; font-weight: 500; color: var(--ink); margin-bottom: 12px; text-align: center; }
+  .cuadrante-mapa { background: var(--bg-warm); border-radius: 14px; padding: 20px; margin: 20px 0; }
+  .cuadrantes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .cuadrante-cell { background: white; padding: 14px; border-radius: 10px; font-size: 13px; border: 2px solid var(--border-soft); opacity: 0.4; transition: all 0.3s; }
+  .cuadrante-cell.activo { opacity: 1; border-color: var(--primary); background: var(--bg-callout); }
+  .cuadrante-cell strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 14px; }
+  .loading { text-align: center; padding: 60px 20px; }
+  .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid var(--bg-callout); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; margin-bottom: 20px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .codigo-display { background: var(--bg-callout); border: 2px dashed var(--primary); border-radius: 10px; padding: 16px; text-align: center; font-family: 'Courier New', monospace; font-size: 28px; letter-spacing: 6px; font-weight: 500; color: var(--primary); margin: 16px 0; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; margin-right: 6px; }
+  .badge-madre { background: var(--bg-madre); color: var(--primary); }
+  .badge-hija { background: var(--bg-hija); color: var(--zone-sostenida-t); }
+  .badge-completo { background: var(--zone-sostenida); color: var(--zone-sostenida-t); }
+  .badge-pendiente { background: var(--zone-atencion); color: var(--zone-atencion-t); }
+  .badge-vacio { background: #EEE; color: var(--muted); }
+  .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; }
+  .stat-card { background: var(--bg-warm); border-radius: 12px; padding: 16px; text-align: center; }
+  .stat-card .label { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+  .stat-card .value { font-size: 28px; font-weight: 500; color: var(--primary); font-family: Georgia, serif; }
+  .dupla-row { background: white; border: 1px solid var(--border-soft); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .dupla-row:hover { border-color: var(--primary); }
+  .dupla-info { flex: 1; min-width: 200px; }
+  .dupla-nombre { font-size: 17px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+  .dupla-meta { font-size: 13px; color: var(--muted); }
+  .dupla-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft); margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .topbar-titulo { font-family: Georgia, serif; color: var(--primary); font-size: 24px; }
+  .topbar-info { color: var(--muted); font-size: 14px; }
+  .brecha-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-soft); }
+  .brecha-row:last-child { border-bottom: none; }
+  .brecha-label { flex: 1; font-size: 14px; }
+  .brecha-bar-container { flex: 2; height: 24px; background: var(--bg-warm); border-radius: 6px; position: relative; }
+  .brecha-bar-madre { position: absolute; top: 0; left: 0; height: 100%; background: rgba(192,87,60,0.35); border-radius: 6px; }
+  .brecha-bar-hija { position: absolute; top: 0; left: 0; height: 100%; background: rgba(122,140,93,0.35); border-radius: 6px; mix-blend-mode: multiply; }
+  .brecha-value { min-width: 55px; text-align: right; font-size: 13px; color: var(--muted); }
+  .nav-tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 2px solid var(--border-soft); overflow-x: auto; }
+  .nav-tab { padding: 12px 20px; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 15px; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+  .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-state h4 { color: var(--muted); }
+  .reveal-bloqueado { background: var(--bg-cita); padding: 24px; border-radius: 14px; text-align: center; }
+  .estado-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+  .estado-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .estado-completo { background: var(--zone-sostenida); color: var(--zone-sostenida-t); }
+  .estado-completo .dot { background: var(--zone-sostenida-t); }
+  .estado-progreso { background: var(--zone-atencion); color: var(--zone-atencion-t); }
+  .estado-progreso .dot { background: var(--zone-atencion-t); }
+  .estado-pendiente { background: #EEE; color: var(--muted); }
+  .estado-pendiente .dot { background: var(--muted); }
+  .alerta-banner { background: var(--bg-callout); border: 1px solid var(--primary); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center; }
+  .alerta-banner.success { background: var(--zone-sostenida); border-color: var(--zone-sostenida-t); }
+  .consentimiento-box { background: var(--bg-cita); border: 1px solid var(--border-soft); border-radius: 12px; padding: 20px; margin: 20px 0; }
+  .consentimiento-box.hija-box { background: var(--bg-hija); }
+  .consentimiento-box h4 { color: var(--ink); font-family: inherit; font-size: 16px; }
+  .consentimiento-scroll { max-height: 240px; overflow-y: auto; background: white; border-radius: 8px; padding: 16px; margin: 12px 0; font-size: 14px; line-height: 1.55; border: 1px solid var(--border-soft); }
+  .consentimiento-scroll p { margin-bottom: 10px; font-size: 14px; }
+  .consentimiento-scroll strong { color: var(--primary); }
+  .consentimiento-check { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; cursor: pointer; font-size: 14px; line-height: 1.5; }
+  .consentimiento-check input { margin-top: 3px; flex-shrink: 0; width: 18px; height: 18px; accent-color: var(--primary); }
+  .crisis-banner { background: #FBEAE3; border: 2px solid #C97A5F; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .crisis-banner strong { color: #8C3F25; }
+  .crisis-banner a { color: #8C3F25; font-weight: 500; }
+  .footer-legal { margin-top: 32px; padding: 16px; font-size: 12px; color: var(--muted); text-align: center; border-top: 1px solid var(--border-soft); }
+  .footer-legal a { color: var(--muted); cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container" id="main-container">
+
+  <div class="screen active" id="screen-portada">
+    <div class="portada">
+      <span class="logo-me">ME</span><br><span class="logo-we">WE</span>
+      <div class="portada-sub">Plataforma del Mapa de Conciencia Relacional</div>
+      <div class="dots">· · ·</div>
+      <p style="font-size: 16px; max-width: 480px; margin: 0 auto 24px;">
+        Una herramienta para madres, hijas y facilitadoras del taller Me We.
+      </p>
+      <button class="btn btn-primary btn-block" style="max-width:300px; margin:0 auto;" onclick="mostrarPantalla('screen-rol')">Entrar</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-rol">
+    <h2>¿Quién entra?</h2>
+    <p>Elige tu rol. Cada uno tiene una vista distinta de la plataforma.</p>
+    <div class="rol-card madre" onclick="iniciarFlujo('madre')">
+      <h3>Soy mamá</h3>
+      <p>Para responder mi test y ver los resultados de la dupla cuando ambas terminemos.</p>
+    </div>
+    <div class="rol-card hija" onclick="iniciarFlujo('hija')">
+      <h3>Soy hija</h3>
+      <p>Para responder mi test. Mi mamá me pasó un código para entrar.</p>
+    </div>
+    <div class="rol-card admin" onclick="mostrarPantalla('screen-admin-login')">
+      <h3>Soy facilitadora / admin</h3>
+      <p>Para ver el dashboard de todas las duplas del taller.</p>
+    </div>
+    <button class="btn btn-ghost btn-block" style="margin-top: 16px;" onclick="mostrarPantalla('screen-portada')">Volver</button>
+  </div>
+
+  <div class="screen" id="screen-madre-acceso">
+    <h2>Hola, mamá 🌿</h2>
+    <p>Dos formas de entrar:</p>
+    <button class="btn btn-primary btn-block" onclick="mostrarPantalla('screen-madre-nueva')">Es mi primera vez · crear cuenta</button>
+    <button class="btn btn-secondary btn-block" onclick="mostrarPantalla('screen-madre-retomar')">Ya tengo un código · retomar</button>
+    <button class="btn btn-ghost btn-block" style="margin-top: 16px;" onclick="mostrarPantalla('screen-rol')">Volver</button>
+  </div>
+
+  <div class="screen" id="screen-madre-nueva">
+    <h2>Vamos a crear tu cuenta</h2>
+    <p class="muted">Tu cuenta queda atada a un código de dupla que vas a compartir con tu hija.</p>
+    <div class="input-group">
+      <label>¿Cómo quieres que te llame?</label>
+      <input type="text" id="madre-nombre" placeholder="Tu nombre o apodo">
+    </div>
+    <div class="input-group">
+      <label>¿Qué edad tiene tu hija?</label>
+      <select id="madre-edad-hija">
+        <option value="9-10">9-10 años</option>
+        <option value="11-12" selected>11-12 años</option>
+        <option value="13-14">13-14 años</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Código del taller (opcional)</label>
+      <input type="text" id="madre-taller" placeholder="Si te dieron uno">
+    </div>
+
+    <div class="consentimiento-box" id="consentimiento-madre">
+      <h4 style="margin-bottom:8px;">Antes de continuar, lee esto con calma</h4>
+      <div class="consentimiento-scroll">
+        <p><strong>Qué es Me We.</strong> Me We es una herramienta experiencial de autoconocimiento relacional, no un servicio de salud mental. No diagnostica ni reemplaza atención psicológica, psiquiátrica o médica. Sus resultados son una foto del momento, no un veredicto sobre ti o tu hija.</p>
+        <p><strong>Qué datos guardamos.</strong> Tu nombre o apodo, la edad de tu hija, el código de taller (si lo das), las 96 respuestas que vas a dar y los índices que calculamos a partir de ellas. No pedimos correo, teléfono, identificación, ubicación ni fotos.</p>
+        <p><strong>Quién los ve.</strong> Tú (con tu código de dupla), tu hija solo verá su propio reporte (no las respuestas tuyas), y la facilitadora del taller con acceso admin. Nadie más. Los datos no se venden, no se ceden a terceros, no se usan para publicidad.</p>
+        <p><strong>Sobre tu hija menor de edad.</strong> Al crear esta cuenta, declaras que eres la madre, tutora legal o representante con autoridad para autorizar la participación de tu hija. Asumes la responsabilidad de explicarle el test en términos apropiados a su edad antes de pasarle el código, y de acompañarla emocionalmente si lo necesita durante o después de responderlo.</p>
+        <p><strong>Tus derechos.</strong> Puedes pausar y retomar cuando quieras. Puedes pedir que borremos todos tus datos (y los de tu hija) escribiendo a la facilitadora; lo ejecutamos en máximo 7 días sin pedirte explicaciones.</p>
+        <p><strong>Lo que no es esta plataforma.</strong> No es un canal de emergencia. Si tú o tu hija están viviendo una crisis emocional, autolesión, ideas de suicidio, situación de abuso o violencia, esta plataforma no es el lugar adecuado para procesarlo. Comunícate con servicios de emergencia locales o profesionales de salud mental.</p>
+        <p><strong>Sin garantía de continuidad.</strong> Esta es una plataforma de piloto. Si por razones técnicas se cae o se pierden datos, no podemos garantizar recuperación. Recomendamos descargar tu reporte en PDF cuando termines.</p>
+      </div>
+      <label class="consentimiento-check">
+        <input type="checkbox" id="madre-acepta">
+        <span>He leído y acepto las condiciones de uso. Autorizo el procesamiento de mis datos y los de mi hija para los fines descritos.</span>
+      </label>
+      <label class="consentimiento-check">
+        <input type="checkbox" id="madre-edad">
+        <span>Soy mayor de 18 años y tengo autoridad legal sobre mi hija para autorizar su participación.</span>
+      </label>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="crearCuentaMadre()">Crear cuenta y código de dupla</button>
+    <button class="btn btn-ghost btn-block" onclick="mostrarPantalla('screen-madre-acceso')">Volver</button>
+  </div>
+
+  <div class="screen" id="screen-madre-codigo">
+    <h2>Tu código de dupla 🌿</h2>
+    <p>Este código une tu cuenta con la de tu hija. Compártelo con ella para que pueda entrar.</p>
+    <div class="codigo-display" id="codigo-display-madre"></div>
+    <p class="muted center">Compártelo por mensaje, foto, o díselo en voz alta. Que lo guarde.</p>
+    <div class="callout-soft">
+      <p style="margin: 0; font-size: 14px;"><strong style="color: var(--secondary);">Importante:</strong> también úsalo tú si entras desde otro dispositivo. Es tu llave de regreso.</p>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="entrarADashboardMadre()">Empezar mi test</button>
+  </div>
+
+  <div class="screen" id="screen-madre-retomar">
+    <h2>Retomar tu sesión</h2>
+    <div class="input-group">
+      <label>Código de dupla</label>
+      <input type="text" id="madre-codigo-retomar" placeholder="6 caracteres" maxlength="6" style="text-transform: uppercase; letter-spacing: 4px; font-family: 'Courier New', monospace;">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="retomarMadre()">Entrar</button>
+    <button class="btn btn-ghost btn-block" onclick="mostrarPantalla('screen-madre-acceso')">Volver</button>
+  </div>
+
+  <div class="screen" id="screen-hija-acceso">
+    <h2>Hola 🌱</h2>
+    <p>¿Tu mamá te pasó un código? Ingrésalo acá.</p>
+    <div class="input-group">
+      <label>Código que te pasó tu mamá</label>
+      <input type="text" id="hija-codigo" placeholder="6 caracteres" maxlength="6" style="text-transform: uppercase; letter-spacing: 4px; font-family: 'Courier New', monospace;">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="hijaIngresarConCodigo()">Entrar</button>
+    <button class="btn btn-ghost btn-block" onclick="mostrarPantalla('screen-rol')">Volver</button>
+  </div>
+
+  <div class="screen" id="screen-hija-nombre">
+    <h2>¿Cómo te llamas? 🌱</h2>
+    <p>Pon tu nombre o apodo, lo que prefieras.</p>
+    <div class="input-group">
+      <input type="text" id="hija-nombre" placeholder="Tu nombre o apodo">
+    </div>
+
+    <div class="consentimiento-box hija-box" id="consentimiento-hija">
+      <h4 style="margin-bottom:8px;">Antes de empezar, dos cosas importantes</h4>
+      <p style="font-size:15px;"><strong>1.</strong> Lo que respondas acá lo va a ver tu mamá (después, no ahora) y la facilitadora del taller. <strong>Nadie de tu colegio, nadie de tus amigas, nadie en redes.</strong></p>
+      <p style="font-size:15px;"><strong>2.</strong> No hay respuestas correctas. Si una pregunta te incomoda, está bien dejarla y volver. Si en algún momento te sientes muy mal, dile a tu mamá o a un adulto de confianza. Esto no es un chat de ayuda, es un mapa para el taller.</p>
+      <label class="consentimiento-check">
+        <input type="checkbox" id="hija-acepta">
+        <span>Entiendo y quiero empezar.</span>
+      </label>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="completarPerfilHija()">Sigamos</button>
+  </div>
+
+  <div class="screen" id="screen-dashboard-madre">
+    <div class="topbar">
+      <div>
+        <div class="topbar-titulo">Hola, <span id="dash-madre-nombre"></span> 🌿</div>
+        <div class="topbar-info">Tu código de dupla: <strong id="dash-madre-codigo"></strong></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()">Salir</button>
+    </div>
+
+    <div id="dash-madre-alertas"></div>
+
+    <h3>Tu test</h3>
+    <div id="dash-madre-test-card"></div>
+
+    <h3 style="margin-top: 24px;">Tu hija</h3>
+    <div id="dash-madre-hija-card"></div>
+
+    <div id="dash-madre-comparativo-section"></div>
+  </div>
+
+  <div class="screen" id="screen-dashboard-hija">
+    <div class="topbar">
+      <div>
+        <div class="topbar-titulo">Hola, <span id="dash-hija-nombre"></span> 🌱</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()">Salir</button>
+    </div>
+    <div id="dash-hija-alertas"></div>
+    <h3>Tu test</h3>
+    <div id="dash-hija-test-card"></div>
+  </div>
+
+  <div class="screen" id="screen-escala">
+    <h2>La escala que vas a usar</h2>
+    <p>Para todas las preguntas vas a elegir un número del 1 al 5. No hay que pensarlo mucho: la primera respuesta suele ser la más honesta.</p>
+    <div class="escala-demo">
+      <div class="item"><span class="emoji">🌱</span><span class="num">1.</span> Casi nunca</div>
+      <div class="item"><span class="emoji">🌿</span><span class="num">2.</span> Un poquito</div>
+      <div class="item"><span class="emoji">🌼</span><span class="num">3.</span> A veces</div>
+      <div class="item"><span class="emoji">🌻</span><span class="num">4.</span> Bastante</div>
+      <div class="item"><span class="emoji">🔥</span><span class="num">5.</span> Mucho</div>
+    </div>
+    <div class="callout-soft">
+      <p style="margin: 0;"><strong style="color: var(--secondary);">Recuerda:</strong> no hay respuestas correctas. Lo que respondas se guarda automáticamente y solo lo va a ver tu facilitadora en el taller.</p>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="iniciarTest()">Empezar</button>
+  </div>
+
+  <div class="screen" id="screen-test">
+    <div class="test-header">
+      <div class="progreso-bar"><div class="progreso-fill" id="progreso-fill"></div></div>
+      <div class="progreso-text" id="progreso-text">Pregunta 1 de 96</div>
+      <div class="modulo-tag" id="modulo-tag">M1 · Mi mundo por dentro</div>
+      <div class="modulo-titulo" id="modulo-titulo">Mi mundo por dentro</div>
+      <div class="modulo-sub" id="modulo-sub"></div>
+    </div>
+    <div class="pregunta-box">
+      <div class="pregunta-numero" id="pregunta-numero">Pregunta 1 del módulo</div>
+      <div class="pregunta-texto" id="pregunta-texto"></div>
+    </div>
+    <div class="escala-buttons" id="escala-buttons">
+      <button class="escala-btn" data-valor="1" onclick="responder(1)"><span class="emoji">🌱</span><span class="num">1</span><span class="label">Casi nunca</span></button>
+      <button class="escala-btn" data-valor="2" onclick="responder(2)"><span class="emoji">🌿</span><span class="num">2</span><span class="label">Poquito</span></button>
+      <button class="escala-btn" data-valor="3" onclick="responder(3)"><span class="emoji">🌼</span><span class="num">3</span><span class="label">A veces</span></button>
+      <button class="escala-btn" data-valor="4" onclick="responder(4)"><span class="emoji">🌻</span><span class="num">4</span><span class="label">Bastante</span></button>
+      <button class="escala-btn" data-valor="5" onclick="responder(5)"><span class="emoji">🔥</span><span class="num">5</span><span class="label">Mucho</span></button>
+    </div>
+    <div class="nav-buttons">
+      <button class="nav-btn" id="btn-atras" onclick="preguntaAnterior()">← Atrás</button>
+      <button class="nav-btn" onclick="pausarYVolver()">Pausar y volver al dashboard</button>
+    </div>
+    <div style="margin-top:24px; padding:12px 16px; background:var(--bg-cita); border-radius:10px; font-size:13px; color:var(--muted); text-align:center;">
+      Si algo de lo que respondes te activa fuerte, pausa y habla con un adulto de confianza. <a href="#" onclick="event.preventDefault(); mostrarCrisis();" style="color:var(--primary);">Recursos de apoyo →</a>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-pausa">
+    <div class="pausa-box">
+      <h3>Vas por la mitad 🌿</h3>
+      <p>¿Cómo va eso? Si necesitas pausa, está bien. Si quieres seguir, vamos a la segunda parte.</p>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="continuarDespuesPausa()">Seguir</button>
+    <button class="btn btn-secondary btn-block" onclick="pausarYVolver()">Pausar y volver al dashboard</button>
+  </div>
+
+  <div class="screen" id="screen-procesando">
+    <div class="loading">
+      <div class="spinner"></div>
+      <h3>Cruzando lo que respondiste…</h3>
+      <p class="muted">Tomando una foto del momento</p>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-reporte-individual">
+    <div class="topbar">
+      <div class="topbar-titulo">Tu mapa Me We</div>
+      <button class="btn btn-ghost btn-sm" onclick="volverAlDashboard()">Volver al dashboard</button>
+    </div>
+    <div id="reporte-individual-contenido"></div>
+    <div style="margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-primary" style="flex: 1; min-width: 200px;" onclick="descargarPDFIndividual()">Descargar PDF</button>
+      <button class="btn btn-secondary" style="flex: 1; min-width: 200px;" onclick="volverAlDashboard()">Volver al dashboard</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-reporte-comparativo">
+    <div class="topbar">
+      <div class="topbar-titulo">Mapa de la dupla</div>
+      <button class="btn btn-ghost btn-sm" onclick="volverAlDashboard()">Volver al dashboard</button>
+    </div>
+    <div id="reporte-comparativo-contenido"></div>
+    <div style="margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn btn-primary" style="flex: 1; min-width: 200px;" onclick="descargarPDFComparativo()">Descargar PDF</button>
+      <button class="btn btn-secondary" style="flex: 1; min-width: 200px;" onclick="volverAlDashboard()">Volver al dashboard</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-admin-login">
+    <h2>Acceso facilitadora</h2>
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="admin-email" placeholder="facilitadora@taller.com">
+    </div>
+    <div class="input-group">
+      <label>Contraseña</label>
+      <input type="password" id="admin-pass" placeholder="">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="loginAdmin()">Entrar al dashboard</button>
+    <button class="btn btn-ghost btn-block" onclick="mostrarPantalla('screen-rol')">Volver</button>
+    <p class="muted" style="font-size: 13px; margin-top: 24px;">Usa una cuenta de Supabase Auth con <code>app_role=facilitator_admin</code>. En modo local, se mantiene el fallback por contraseña.</p>
+  </div>
+
+  <div class="screen" id="screen-dashboard-admin">
+    <div class="topbar">
+      <div class="topbar-titulo">Dashboard Me We · admin</div>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarSesion()">Salir</button>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="duplas" onclick="cambiarTab('duplas')">Duplas</button>
+      <button class="nav-tab" data-tab="metricas" onclick="cambiarTab('metricas')">Métricas agregadas</button>
+      <button class="nav-tab" data-tab="talleres" onclick="cambiarTab('talleres')">Por taller</button>
+    </div>
+    <div id="admin-tab-duplas" class="admin-tab"></div>
+    <div id="admin-tab-metricas" class="admin-tab" style="display:none;"></div>
+    <div id="admin-tab-talleres" class="admin-tab" style="display:none;"></div>
+  </div>
+
+  <div class="screen" id="screen-admin-dupla-detalle">
+    <div class="topbar">
+      <div class="topbar-titulo">Detalle de dupla</div>
+      <button class="btn btn-ghost btn-sm" onclick="mostrarPantalla('screen-dashboard-admin')">← Volver al dashboard</button>
+    </div>
+    <div id="admin-detalle-contenido"></div>
+  </div>
+
+  <div class="screen" id="screen-crisis">
+    <div class="topbar">
+      <div class="topbar-titulo">Recursos de apoyo</div>
+      <button class="btn btn-ghost btn-sm" onclick="volverDeCrisis()">← Volver</button>
+    </div>
+    <div class="crisis-banner">
+      <p style="margin:0;"><strong>Si tú o tu hija están en peligro inmediato</strong>, llama ahora a los servicios de emergencia de tu país. Esta plataforma no es un canal de crisis y no monitorea respuestas en tiempo real.</p>
+    </div>
+    <h3>Ecuador (línea por defecto)</h3>
+    <p><strong>911</strong> · Emergencias generales (24/7, gratuito).<br>
+       <strong>Línea 171</strong> opción 6 · Salud mental, Ministerio de Salud Pública.<br>
+       <strong>1800-DELITO (335486)</strong> · Denuncia de violencia o abuso a menores.</p>
+    <h3>Si estás fuera de Ecuador</h3>
+    <p>Busca <em>"línea crisis salud mental [tu país]"</em> o llama al número de emergencias local. La OMS mantiene un directorio internacional en su sitio oficial.</p>
+    <h3>Acompañamiento profesional</h3>
+    <p>Me We es una herramienta de mapeo relacional para uso en taller. No reemplaza terapia individual, familiar ni de pareja. Si los resultados que viste o las emociones que aparecieron mientras respondías te dejaron con preguntas grandes, considera buscar un profesional de salud mental con experiencia en vínculo madre-hija o preadolescencia.</p>
+    <div class="callout-soft">
+      <p style="margin:0;"><strong style="color: var(--secondary);">Recordatorio para mamás:</strong> si tu hija dijo algo que te preocupa al ver su reporte, no la confrontes con eso de inmediato. Habla primero con la facilitadora del taller para procesar cómo abordarlo sin que ella sienta que la auditaron.</p>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-politica">
+    <div class="topbar">
+      <div class="topbar-titulo">Política de privacidad y términos</div>
+      <button class="btn btn-ghost btn-sm" onclick="volverDePolitica()">← Volver</button>
+    </div>
+    <p class="muted">Última actualización: enero 2026 · Versión 1.0</p>
+    <h3>1. Quién opera Me We</h3>
+    <p>Me We es operada por la facilitadora o equipo que te dio acceso a esta plataforma. Cualquier consulta, reclamo o ejercicio de derechos sobre tus datos debe dirigirse a ella directamente.</p>
+    <h3>2. Qué datos recopilamos</h3>
+    <ul style="margin-left:20px; margin-bottom:16px;">
+      <li>Nombre o apodo que cada usuaria proporciona libremente.</li>
+      <li>Edad aproximada de la hija (rango etario, no fecha exacta).</li>
+      <li>Código de taller (opcional).</li>
+      <li>Las 96 respuestas en escala 1-5 (versión madre) o 48 (versión hija).</li>
+      <li>Los índices calculados a partir de esas respuestas.</li>
+      <li>Marca de tiempo de creación, pausa y completitud.</li>
+    </ul>
+    <p><strong>No recopilamos:</strong> correo electrónico, número de teléfono, identificación oficial, ubicación geográfica precisa, fotografías, ni datos biométricos.</p>
+    <h3>3. Para qué los usamos</h3>
+    <p>Únicamente para generar el reporte individual, el reporte comparativo madre-hija, las métricas agregadas del taller y el acompañamiento de la facilitadora durante la sesión presencial. No se usan para investigación académica ni se comparten con terceros sin tu consentimiento explícito.</p>
+    <h3>4. Quién tiene acceso</h3>
+    <p>Tú accedes a tus propios datos mediante tu código de dupla. Tu hija accede solo a su reporte individual. La facilitadora con contraseña admin accede a todos los reportes del taller. Nadie más.</p>
+    <h3>5. Cuánto tiempo guardamos los datos</h3>
+    <p>Los datos crudos (las 96 respuestas individuales) se conservan hasta 90 días después de la fecha del taller, y luego se eliminan automáticamente. Los reportes resumidos (los 10 índices y el cuadrante) se conservan hasta un año para análisis longitudinal si la familia repite el test.</p>
+    <h3>6. Derecho al olvido</h3>
+    <p>Puedes solicitar la eliminación total e inmediata de los datos de tu dupla escribiendo a la facilitadora con tu código de dupla. La eliminación se ejecuta en un máximo de 7 días naturales, sin necesidad de justificación.</p>
+    <h3>7. Sobre menores de edad</h3>
+    <p>La participación de una hija menor requiere autorización explícita de su madre, tutora legal o representante mayor de edad. Esta autorización se registra al momento de crear la cuenta. La menor también otorga su asentimiento al ingresar su nombre y aceptar las condiciones, en lenguaje adaptado a su edad.</p>
+    <h3>8. Limitaciones de la plataforma</h3>
+    <p>Me We es una herramienta experiencial de autoconocimiento relacional. <strong>No es</strong>: un instrumento diagnóstico clínico, un servicio de salud mental, un canal de emergencia, ni un sustituto de atención profesional. Sus resultados no constituyen diagnóstico psicológico, psiquiátrico o médico, y no deben ser usados como evidencia en procesos legales, custodios, escolares o laborales.</p>
+    <h3>9. Sin garantía de continuidad técnica</h3>
+    <p>Esta plataforma se ofrece "tal como está", en versión piloto. Aunque hacemos todo lo razonable para mantener los datos seguros, no podemos garantizar disponibilidad ininterrumpida ni recuperación ante fallas técnicas. Recomendamos descargar el reporte en PDF al completar el test.</p>
+    <h3>10. Responsabilidad limitada</h3>
+    <p>La operadora de Me We no se hace responsable de decisiones que tú o terceros tomen basándose en los resultados de esta herramienta. Los resultados son una invitación a la conversación, no un mandato de acción. Las decisiones sobre tu vida familiar, salud mental, custodia, escolarización o tratamiento médico son tuyas y deben tomarse, cuando corresponda, con acompañamiento profesional adecuado.</p>
+    <h3>11. Cambios a estos términos</h3>
+    <p>Si actualizamos esta política, los usuarios actuales serán notificados a través de la facilitadora antes del próximo acceso. El uso continuado tras la notificación implica aceptación de los nuevos términos.</p>
+    <h3>12. Ley aplicable</h3>
+    <p>Esta política se rige por las leyes de la República del Ecuador. Cualquier controversia se resolverá ante los tribunales competentes de Ecuador, sin perjuicio de los derechos del usuario en su jurisdicción de residencia.</p>
+    <h3>13. Contacto</h3>
+    <p>Para cualquier consulta sobre tus datos, ejercicio de derechos o reportar un problema, contacta directamente con la facilitadora que te dio acceso al taller.</p>
+  </div>
+
+  <div class="footer-legal">
+    <a onclick="abrirPolitica()">Política de privacidad y términos</a> · 
+    <a onclick="mostrarCrisis()">Recursos de apoyo</a><br>
+    <span style="display:inline-block; margin-top:8px;">Me We v1.0 · Herramienta experiencial · No es diagnóstico clínico ni canal de emergencia</span>
+  </div>
+
+</div>
+
+<script>
+const LOCAL_ADMIN_PASS = (window.MEWE_LOCAL_ADMIN_PASS || "mewe2026");
+const MEWE_BACKEND_MODE = (window.MEWE_BACKEND_MODE || "auto").toLowerCase();
+const SUPABASE_URL = window.MEWE_SUPABASE_URL || "";
+const SUPABASE_PUBLISHABLE_KEY = window.MEWE_SUPABASE_PUBLISHABLE_KEY || "";
+const QUESTION_BANK_VERSION = "v1";
+
+const PREGUNTAS = {
+  madre: [
+    { id:"M1-Q01", mod:"M1", txt:"Últimamente, al final del día siento que el cuerpo me pide pausa antes de descansar.", dim:"saturacion", signo:1, peso:1.0 },
+    { id:"M1-Q02", mod:"M1", txt:"Cuando algo me agita por dentro, me cuesta volver a la calma rápido.", dim:"regulacion", signo:-1, peso:1.0 },
+    { id:"M1-Q03", mod:"M1", txt:"Hay momentos del día donde me siento presente conmigo misma, no solo respondiendo a lo que pasa afuera.", dim:"presencia", signo:1, peso:1.5 },
+    { id:"M1-Q04", mod:"M1", txt:"Cargo en mi cabeza muchas cosas pendientes a la vez, aunque por fuera me vea funcionando bien.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M1-Q05", mod:"M1", txt:"Me hablo a mí misma con cariño cuando algo me sale mal.", dim:"validacion", signo:1, peso:1.0 },
+    { id:"M1-Q06", mod:"M1", txt:"Reacciono más fuerte de lo que me hubiera gustado, especialmente cuando estoy cansada.", dim:"regulacion", signo:-1, peso:1.0 },
+    { id:"M1-Q07", mod:"M1", txt:"Tengo un espacio (físico, mental o emocional) que siento solo mío.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M1-Q08", mod:"M1", txt:"A veces siento que estoy cumpliendo roles más que viviendo mi vida.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M1-Q09", mod:"M1", txt:"Cuando algo me duele, puedo mostrarlo con alguien, aunque sea solo con una persona.", dim:"apertura", signo:1, peso:1.0 },
+    { id:"M1-Q10", mod:"M1", txt:"Necesito tener todo bajo control para sentirme tranquila.", dim:"regulacion", signo:-1, peso:1.0 },
+    { id:"M1-Q11", mod:"M1", txt:"Siento culpa con frecuencia, incluso por cosas que racionalmente sé que no son mi responsabilidad.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M1-Q12", mod:"M1", txt:"Si me preguntan cómo estoy, suelo decir \"bien\" aunque por dentro no lo esté.", dim:"apertura", signo:-1, peso:1.0 },
+    { id:"M3-Q01", mod:"M3", txt:"Sé cuando mi hija no está bien, aunque ella no me lo diga con palabras.", dim:"presencia", signo:1, peso:1.5 },
+    { id:"M3-Q02", mod:"M3", txt:"Mi hija me cuenta cosas importantes para ella, sin que yo tenga que preguntar mucho.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M3-Q03", mod:"M3", txt:"Hay temas en los que siento que ella se cierra conmigo.", dim:"apertura", signo:-1, peso:1.0 },
+    { id:"M3-Q04", mod:"M3", txt:"Conozco lo que la pone nerviosa o ansiosa, incluso cuando no es evidente desde afuera.", dim:"presencia", signo:1, peso:1.0 },
+    { id:"M3-Q05", mod:"M3", txt:"Creo que mi hija siente que puede contarme cosas sin que yo me asuste o me enoje.", dim:"validacion", signo:1, peso:1.5 },
+    { id:"M3-Q06", mod:"M3", txt:"He notado cambios en ella últimamente que me cuesta entender.", dim:"presencia", signo:1, peso:1.0 },
+    { id:"M3-Q07", mod:"M3", txt:"Cuando algo difícil le pasa, ella busca acercarse a mí, no alejarse.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M3-Q08", mod:"M3", txt:"Sé qué temas la hacen sentir insegura, especialmente con sus pares.", dim:"presencia", signo:1, peso:1.0 },
+    { id:"M3-Q09", mod:"M3", txt:"Cuando mi hija se cierra, yo sé esperar el momento sin presionarla.", dim:"validacion", signo:1, peso:1.0 },
+    { id:"M3-Q10", mod:"M3", txt:"Siento que mi hija se compara con otras (compañeras, primas, niñas de redes) más de lo que me gustaría.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M3-Q11", mod:"M3", txt:"A veces siento que la conozco menos de lo que debería.", dim:"presencia", signo:-1, peso:1.0 },
+    { id:"M3-Q12", mod:"M3", txt:"Mi hija se siente segura siendo ella misma cuando estamos juntas.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M5-Q01", mod:"M5", txt:"En mi casa hay momentos del día donde el clima es genuinamente tranquilo.", dim:"conexion_familiar", signo:1, peso:1.0 },
+    { id:"M5-Q02", mod:"M5", txt:"Siento que la carga emocional de la casa recae más en mí que en otras personas adultas del hogar.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M5-Q03", mod:"M5", txt:"En esta casa, los desencuentros se pueden hablar y reparar.", dim:"conexion_familiar", signo:1, peso:1.5 },
+    { id:"M5-Q04", mod:"M5", txt:"Tengo con quién compartir las preocupaciones grandes, sin tener que resolverlas sola.", dim:"conexion_familiar", signo:1, peso:1.5 },
+    { id:"M5-Q05", mod:"M5", txt:"Me cuesta pedir ayuda en mi propia casa.", dim:"conexion_familiar", signo:-1, peso:1.0 },
+    { id:"M5-Q06", mod:"M5", txt:"En mi casa, mostrar vulnerabilidad se siente como un riesgo más que como un alivio.", dim:"seguridad", signo:-1, peso:1.5 },
+    { id:"M5-Q07", mod:"M5", txt:"Las pantallas ocupan más espacio del que me gustaría en nuestros momentos juntos.", dim:"presencia", signo:-1, peso:1.0 },
+    { id:"M5-Q08", mod:"M5", txt:"Hay rituales pequeños (una comida, un momento, un saludo) que sostienen a la familia.", dim:"conexion_familiar", signo:1, peso:1.0 },
+    { id:"M5-Q09", mod:"M5", txt:"Cuando entro a la casa después de un día difícil, el cuerpo se me afloja en vez de tensarse.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M5-Q10", mod:"M5", txt:"Siento que estoy disponible para mi hija más de lo que estoy disponible para mí misma.", dim:"saturacion", signo:1, peso:1.0 },
+    { id:"M5-Q11", mod:"M5", txt:"En la casa se valida lo que sentimos, no solo lo que hacemos.", dim:"validacion", signo:1, peso:1.5 },
+    { id:"M5-Q12", mod:"M5", txt:"Si mañana tuviera un día imposible, sé quién en mi casa estaría conmigo sin que yo lo pida.", dim:"conexion_familiar", signo:1, peso:1.0 },
+    { id:"M7-Q01", mod:"M7", txt:"Tengo personas en mi vida con las que puedo ser yo misma sin filtrar.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M7-Q02", mod:"M7", txt:"Me comparo con otras madres más de lo que me gustaría.", dim:"presion_social", signo:1, peso:1.5 },
+    { id:"M7-Q03", mod:"M7", txt:"Las redes sociales me dejan a veces con sensación de no estar haciéndolo bien.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M7-Q04", mod:"M7", txt:"Tengo una persona, fuera de mi familia, con la que puedo llorar si lo necesito.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M7-Q05", mod:"M7", txt:"Siento presión por mostrar una imagen de \"todo bajo control\" hacia afuera.", dim:"presion_social", signo:1, peso:1.5 },
+    { id:"M7-Q06", mod:"M7", txt:"Cuando me junto con otras madres, salgo con energía, no más cansada.", dim:"apertura", signo:1, peso:1.0 },
+    { id:"M7-Q07", mod:"M7", txt:"Mi círculo social actual nutre mi rol de madre, no lo presiona.", dim:"apertura", signo:1, peso:1.0 },
+    { id:"M7-Q08", mod:"M7", txt:"A veces evito espacios sociales para no tener que actuar de \"mamá ejemplar\".", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M7-Q09", mod:"M7", txt:"Mi círculo me permite hablar de las partes difíciles de la maternidad.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M7-Q10", mod:"M7", txt:"Las opiniones de personas que no me conocen bien me afectan más de lo que admitiría.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M7-Q11", mod:"M7", txt:"Tengo espacios propios fuera de mi rol de madre (trabajo, hobbies, amigas, deporte).", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M7-Q12", mod:"M7", txt:"Si dejara de ser \"la mamá de mi hija\" un fin de semana, sabría qué hacer con ese tiempo.", dim:"seguridad", signo:1, peso:1.0 }
+  ],
+  hija: [
+    { id:"M2-Q01", mod:"M2", txt:"Cuando estoy contenta, me dura un buen rato, no se me pasa rápido.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M2-Q02", mod:"M2", txt:"A veces me pongo nerviosa antes de cosas que para otros parecen normales.", dim:"regulacion", signo:-1, peso:1.0 },
+    { id:"M2-Q03", mod:"M2", txt:"Me cuesta dormirme porque tengo muchas cosas en la cabeza.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M2-Q04", mod:"M2", txt:"Cuando me equivoco, me hablo feo por dentro (\"qué tonta\", \"siempre la riego\").", dim:"validacion", signo:-1, peso:1.5 },
+    { id:"M2-Q05", mod:"M2", txt:"Si una amiga consigue algo, me cuesta no compararme con ella.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M2-Q06", mod:"M2", txt:"Hay cosas que siento y que no le cuento a nadie.", dim:"apertura", signo:-1, peso:1.0 },
+    { id:"M2-Q07", mod:"M2", txt:"Me preocupa decepcionar a alguien importante para mí.", dim:"validacion", signo:-1, peso:1.5 },
+    { id:"M2-Q08", mod:"M2", txt:"Cuando estoy triste, puedo decir \"estoy triste\" sin esconderlo.", dim:"apertura", signo:1, peso:1.0 },
+    { id:"M2-Q09", mod:"M2", txt:"Hay momentos en los que siento que tengo que actuar como si todo estuviera bien aunque no lo esté.", dim:"validacion", signo:-1, peso:1.5 },
+    { id:"M2-Q10", mod:"M2", txt:"Cuando algo me sale bien, me lo creo, no pienso que fue suerte.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M2-Q11", mod:"M2", txt:"Siento que sé quién soy, aunque todavía esté entendiéndome.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M2-Q12", mod:"M2", txt:"Cuando algo me molesta, mi cuerpo me avisa (panza, pecho, garganta) antes de que lo entienda con la cabeza.", dim:"regulacion", signo:1, peso:1.0 },
+    { id:"M4-Q01", mod:"M4", txt:"Cuando le cuento algo a mi mamá, siento que de verdad me está escuchando.", dim:"presencia", signo:1, peso:1.5 },
+    { id:"M4-Q02", mod:"M4", txt:"Cuando hago algo mal, me da un poco de miedo cómo va a reaccionar.", dim:"seguridad", signo:-1, peso:1.5 },
+    { id:"M4-Q03", mod:"M4", txt:"Puedo decirle a mi mamá lo que estoy sintiendo sin pensarlo mucho antes.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M4-Q04", mod:"M4", txt:"A veces siento que ella quiere que yo sea de una forma específica.", dim:"validacion", signo:-1, peso:1.0 },
+    { id:"M4-Q05", mod:"M4", txt:"Cuando estoy mal, ella se da cuenta sin que yo se lo diga.", dim:"presencia", signo:1, peso:1.0 },
+    { id:"M4-Q06", mod:"M4", txt:"Hay cosas que prefiero no contarle para que no se preocupe.", dim:"apertura", signo:-1, peso:1.0 },
+    { id:"M4-Q07", mod:"M4", txt:"Cuando le hablo de algo que me importa, ella me toma en serio.", dim:"validacion", signo:1, peso:1.5 },
+    { id:"M4-Q08", mod:"M4", txt:"Cuando ella está estresada, yo intento no agregarle problemas.", dim:"saturacion", signo:1, peso:1.5 },
+    { id:"M4-Q09", mod:"M4", txt:"Mi mamá me deja sentirme triste o enojada sin tratar de arreglarlo enseguida.", dim:"validacion", signo:1, peso:1.5 },
+    { id:"M4-Q10", mod:"M4", txt:"Cuando peleamos, después podemos hablar y arreglarlo, no se queda colgado.", dim:"conexion_familiar", signo:1, peso:1.5 },
+    { id:"M4-Q11", mod:"M4", txt:"Hay temas que yo siento que no se pueden hablar con ella.", dim:"apertura", signo:-1, peso:1.0 },
+    { id:"M4-Q12", mod:"M4", txt:"Estar con mi mamá me hace sentir tranquila, aunque no estemos haciendo nada especial.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M6-Q01", mod:"M6", txt:"Cuando llego a mi casa, me siento más tranquila que cuando estoy afuera.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M6-Q02", mod:"M6", txt:"En mi casa puedo equivocarme sin que sea un drama.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M6-Q03", mod:"M6", txt:"Hay alguien adulto en mi casa con quien siento que puedo hablar de cualquier cosa.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M6-Q04", mod:"M6", txt:"Cuando estoy triste o enojada, alguien en mi casa lo nota.", dim:"presencia", signo:1, peso:1.0 },
+    { id:"M6-Q05", mod:"M6", txt:"A veces siento que tengo que estar bien aunque no lo esté, para no preocupar a nadie.", dim:"validacion", signo:-1, peso:1.5 },
+    { id:"M6-Q06", mod:"M6", txt:"En mi casa se grita más de lo que me gustaría.", dim:"seguridad", signo:-1, peso:1.5 },
+    { id:"M6-Q07", mod:"M6", txt:"Mis emociones tienen lugar en mi casa, no las tengo que esconder.", dim:"validacion", signo:1, peso:1.5 },
+    { id:"M6-Q08", mod:"M6", txt:"Cuando peleamos en mi casa, después se arregla.", dim:"conexion_familiar", signo:1, peso:1.5 },
+    { id:"M6-Q09", mod:"M6", txt:"Hay alguien que me hace sentir especial sin que yo tenga que hacer nada extraordinario.", dim:"validacion", signo:1, peso:1.0 },
+    { id:"M6-Q10", mod:"M6", txt:"Si tengo un problema en el colegio, sé que en mi casa me van a ayudar sin enojarse primero.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M6-Q11", mod:"M6", txt:"En mi casa, las pantallas a veces nos quitan momentos juntos.", dim:"presencia", signo:-1, peso:1.0 },
+    { id:"M6-Q12", mod:"M6", txt:"Tengo un lugar en mi casa que siento que es mío, donde estoy bien sola.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M8-Q01", mod:"M8", txt:"Tengo al menos una amiga con la que puedo ser yo misma, sin filtrar.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M8-Q02", mod:"M8", txt:"Me comparo con otras niñas más de lo que me gustaría.", dim:"presion_social", signo:1, peso:1.5 },
+    { id:"M8-Q03", mod:"M8", txt:"Cuando un grupo se reúne sin mí, me afecta más de lo que muestro.", dim:"presion_social", signo:1, peso:1.5 },
+    { id:"M8-Q04", mod:"M8", txt:"Me cuesta decir \"no quiero\" cuando un grupo está haciendo algo que no me gusta.", dim:"seguridad", signo:-1, peso:1.0 },
+    { id:"M8-Q05", mod:"M8", txt:"Hay redes sociales o contenidos que me dejan con sensación rara después de verlos.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M8-Q06", mod:"M8", txt:"Mis amigas me hacen sentir bien conmigo misma, no insegura.", dim:"apertura", signo:1, peso:1.5 },
+    { id:"M8-Q07", mod:"M8", txt:"Si tengo un problema con una amiga, puedo hablarlo con ella, no solo guardarlo.", dim:"apertura", signo:1, peso:1.0 },
+    { id:"M8-Q08", mod:"M8", txt:"Me preocupa lo que piensen de mí personas que ni siquiera me conocen bien.", dim:"presion_social", signo:1, peso:1.0 },
+    { id:"M8-Q09", mod:"M8", txt:"En el colegio, hay al menos un lugar o una persona donde me siento tranquila.", dim:"seguridad", signo:1, peso:1.5 },
+    { id:"M8-Q10", mod:"M8", txt:"Cambio cómo soy según con quién esté, más de lo que me gustaría.", dim:"seguridad", signo:-1, peso:1.5 },
+    { id:"M8-Q11", mod:"M8", txt:"Hay alguna actividad fuera del colegio donde me siento bien siendo yo.", dim:"seguridad", signo:1, peso:1.0 },
+    { id:"M8-Q12", mod:"M8", txt:"Cuando alguien me deja de hablar o me ignora, siento que algo está mal conmigo.", dim:"seguridad", signo:-1, peso:1.5 }
+  ]
+};
+
+const MODULOS = {
+  M1: { titulo:"Mi mundo por dentro", sub:"Antes de mirar el vínculo, miramos cómo estás tú.", tag:"M1 · Mi mundo" },
+  M2: { titulo:"Mi mundo por dentro", sub:"Cómo estás tú, antes de hablar de los demás.", tag:"M2 · Mi mundo" },
+  M3: { titulo:"Cómo veo a mi hija", sub:"Cómo ves tú a tu hija.", tag:"M3 · Mi hija" },
+  M4: { titulo:"Cómo veo a mi mamá", sub:"Cómo se siente para ti estar con ella.", tag:"M4 · Mi mamá" },
+  M5: { titulo:"Nuestra casa por dentro", sub:"Cómo se siente la casa, no qué pasa adentro.", tag:"M5 · La casa" },
+  M6: { titulo:"Nuestra casa por dentro", sub:"Cómo te sientes tú en tu casa.", tag:"M6 · La casa" },
+  M7: { titulo:"Mi mundo de afuera", sub:"Tu vida fuera del rol de madre.", tag:"M7 · Mi afuera" },
+  M8: { titulo:"Mi mundo de afuera", sub:"Cómo te sientes con tus amigas y en redes.", tag:"M8 · Mi afuera" }
+};
+
+const INDICES_NOMBRES = {
+  seguridad: "Seguridad Emocional",
+  regulacion: "Regulación del Sistema Nervioso",
+  presencia: "Presencia Emocional",
+  validacion: "Validación Percibida",
+  apertura: "Apertura y Confianza",
+  saturacion: "Saturación Emocional",
+  presion_social: "Presión Social",
+  conexion_familiar: "Conexión Familiar"
+};
+
+const INDICES_INVERTIDOS = ["saturacion", "presion_social"];
+
+const COPY_INDICES = {
+  seguridad: {
+    cuidado: "Lo que ves no es debilidad. Es un sistema emocional que lleva tiempo cargando solo y que está pidiendo descanso, no más esfuerzo. La seguridad emocional no se construye en una conversación; se construye en gestos pequeños repetidos.",
+    atencion: "Notamos que el vínculo se siente seguro en ciertos momentos y se tensa en otros. Esto es muy común y muy trabajable. Suele tener que ver con temas específicos donde una de las dos siente que entrar es riesgoso.",
+    sostenida: "Lo que vemos acá es valioso y poco frecuente: hay un lugar donde se puede ser una misma sin actuar. La invitación es no darlo por sentado."
+  },
+  regulacion: {
+    cuidado: "Cuando un sistema nervioso vive mucho tiempo en alerta, deja de distinguir lo urgente de lo cotidiano. Esto no se arregla pensando, se arregla por el cuerpo: respirar más despacio, dormir más, bajar estímulos.",
+    atencion: "Hay regulación, pero con costo. Vuelves a la calma, pero te toma tiempo. Vale la pena identificar qué cosas específicas te activan más rápido.",
+    sostenida: "Cuando algo te activa, vuelves. Eso es elasticidad emocional. La oportunidad acá es compartirla: madre e hija pueden enseñarse mutuamente sus estrategias."
+  },
+  presencia: {
+    cuidado: "Estar en el mismo espacio no es lo mismo que estar disponible. Lo que sostiene la presencia no es tener más tiempo, sino tener momentos donde las dos personas estén realmente ahí.",
+    atencion: "Hay momentos de encuentro real y otros en piloto automático. Identificar el momento donde sí ocurre y protegerlo es más útil que intentar estar presente todo el tiempo.",
+    sostenida: "Hay disponibilidad emocional, no solo de horario. Esto es uno de los predictores más fuertes del bienestar."
+  },
+  validacion: {
+    cuidado: "Cuando una persona siente que debe actuar para ser aceptada, se desconecta de sí misma. Validar no es estar de acuerdo: es \"te veo en lo que sientes\".",
+    atencion: "Casi siempre hay temas o emociones que sí se validan y otros que no. El trabajo es ampliar qué emociones tienen permiso.",
+    sostenida: "Hay un sentir de ser vista en lo que se es. Esto es base de oro. La oportunidad es profundizar: validar también las partes incómodas."
+  },
+  apertura: {
+    cuidado: "Hay vínculo, pero las conversaciones importantes pasan por afuera. Cuando una madre puede recibir lo difícil sin asustarse, la hija aprende que es seguro contarle.",
+    atencion: "Apertura selectiva: hay temas que sí se pueden hablar y otros que no. Identificar cuáles entran en cada lista es clave.",
+    sostenida: "Vínculo con apertura real. Se cuentan lo que importa, y eso es raro y precioso. La oportunidad es prepararse para los próximos años."
+  },
+  saturacion: {
+    cuidado: "Lo que aparece acá no es debilidad. Es un cuerpo y una cabeza sosteniendo más de lo que se puede sostener mucho tiempo. La prioridad emocional es descargar, no entender por qué pasó.",
+    atencion: "El sistema está empezando a cargar más de lo que puede soltar en el día. Es el momento perfecto para mirar qué se puede aliviar.",
+    sostenida: "Carga manejable. El sistema tiene espacio para procesar lo que aparece."
+  },
+  presion_social: {
+    cuidado: "Cuando el sistema recibe estímulo agresivo constante (comparación, juicio, ruido digital), la regulación emocional se vuelve casi imposible.",
+    atencion: "El afuera hace ruido pero no toma el control. Vale la pena mapear las fuentes específicas: ¿qué redes, qué personas?",
+    sostenida: "El afuera no pesa en exceso. Hay relación con el mundo exterior sin que el mundo exterior dirija."
+  },
+  conexion_familiar: {
+    cuidado: "La casa funciona más como frente que como refugio. El trabajo empieza por lo simbólico: un saludo, una comida, un cierre del día.",
+    atencion: "Hay refugio, pero condicional. Casi siempre hay momentos del día donde la conexión se rompe. Esos son los momentos a proteger.",
+    sostenida: "La casa está cumpliendo su función de red de sostén. Las dificultades individuales se metabolizan."
+  },
+  conciencia_relacional: {
+    cuidado: "Lo que ves no es un veredicto. Es una foto del momento. Los vínculos son sistemas vivos: pueden moverse mucho en pocos meses si se trabajan con conciencia.",
+    atencion: "Hay base, hay vínculo, hay áreas de trabajo claras. Esta es la zona donde más se transforma con el taller.",
+    sostenida: "Lo que ves es un sistema relacional funcionando. La invitación del taller acá es profundizar y prevenir."
+  }
+};
+
+let supabaseClient = null;
+let storageReady = Promise.resolve();
+
+function createLocalStorageAdapter() {
+  return {
+    guardarDupla: async (codigo, data) => { localStorage.setItem("mewe_dupla_" + codigo, JSON.stringify(data)); },
+    cargarDupla: async (codigo) => {
+      const r = localStorage.getItem("mewe_dupla_" + codigo);
+      return r ? JSON.parse(r) : null;
+    },
+    eliminarDupla: async (codigo) => { localStorage.removeItem("mewe_dupla_" + codigo); },
+    listarDuplas: async () => {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("mewe_dupla_")) {
+          try { out.push(JSON.parse(localStorage.getItem(k))); } catch (e) {}
+        }
+      }
+      return out;
+    },
+    claimPairAccess: async () => {},
+    loginAdmin: async (_email, password) => {
+      if (password !== LOCAL_ADMIN_PASS) throw new Error("Contraseña incorrecta");
+      sessionStorage.setItem("mewe_admin", "1");
+    },
+    isAdminSession: async () => sessionStorage.getItem("mewe_admin") === "1",
+    logout: async () => {},
+    seedQuestionBank: async () => 0
+  };
+}
+
+function createSupabaseStorageAdapter(client) {
+  const localFallback = createLocalStorageAdapter();
+  const rpc = async (fn, args = {}) => {
+    const { data, error } = await client.rpc(fn, args);
+    if (error) throw new Error(error.message || "Error backend");
+    return data;
+  };
+
+  return {
+    guardarDupla: async (codigo, data) => {
+      await rpc("upsert_pair_snapshot", { p_pair_code: codigo, p_payload: data });
+      await localFallback.guardarDupla(codigo, data);
+    },
+    cargarDupla: async (codigo) => {
+      try {
+        const data = await rpc("get_pair_snapshot", { p_pair_code: codigo });
+        if (data) await localFallback.guardarDupla(codigo, data);
+        return data || null;
+      } catch (e) {
+        return await localFallback.cargarDupla(codigo);
+      }
+    },
+    eliminarDupla: async (codigo) => {
+      await rpc("admin_delete_pair", { p_pair_code: codigo, p_reason: "admin_ui_delete" });
+      await localFallback.eliminarDupla(codigo);
+    },
+    listarDuplas: async () => {
+      try {
+        const data = await rpc("list_pair_snapshots");
+        return Array.isArray(data) ? data : (data ? [data] : []);
+      } catch (e) {
+        return await localFallback.listarDuplas();
+      }
+    },
+    claimPairAccess: async (codigo, rol) => {
+      const roleMap = { madre: "mother", hija: "daughter" };
+      await rpc("claim_pair_access", { p_pair_code: codigo, p_role: roleMap[rol] || rol });
+    },
+    loginAdmin: async (email, password) => {
+      if (!email) throw new Error("Falta el email de la facilitadora");
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw new Error("Credenciales inválidas");
+      const admin = await rpc("is_facilitator_admin");
+      if (!admin) {
+        await client.auth.signOut();
+        throw new Error("Este usuario no tiene rol de facilitadora admin.");
+      }
+      sessionStorage.setItem("mewe_admin", "1");
+    },
+    isAdminSession: async () => {
+      const { data: sData } = await client.auth.getSession();
+      if (!sData.session) return false;
+      const admin = await rpc("is_facilitator_admin");
+      if (admin) sessionStorage.setItem("mewe_admin", "1");
+      return !!admin;
+    },
+    logout: async () => {
+      await client.auth.signOut();
+    },
+    seedQuestionBank: async (questionnaireCode, version, questions) => {
+      return await rpc("seed_question_bank", {
+        p_questionnaire_code: questionnaireCode,
+        p_version: version,
+        p_questions: questions
+      });
+    }
+  };
+}
+
+async function initStorageAdapter() {
+  storage = createLocalStorageAdapter();
+
+  if (MEWE_BACKEND_MODE === "local") return;
+  if (!window.supabase || !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return;
+
+  try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    });
+
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data.session) {
+      const { error } = await supabaseClient.auth.signInAnonymously();
+      if (error) throw error;
+    }
+    storage = createSupabaseStorageAdapter(supabaseClient);
+  } catch (e) {
+    console.error("No se pudo inicializar Supabase. Se usa almacenamiento local.", e);
+    storage = createLocalStorageAdapter();
+  }
+}
+
+async function seedQuestionBankForAdmin() {
+  if (!storage.seedQuestionBank || !sessionStorage.getItem("mewe_admin")) return;
+  try {
+    const motherQuestions = PREGUNTAS.madre.map((q, idx) => ({ ...q, sort_order: idx + 1 }));
+    const daughterQuestions = PREGUNTAS.hija.map((q, idx) => ({ ...q, sort_order: idx + 1 }));
+    await storage.seedQuestionBank("mother_v1", QUESTION_BANK_VERSION, motherQuestions);
+    await storage.seedQuestionBank("daughter_v1", QUESTION_BANK_VERSION, daughterQuestions);
+  } catch (e) {
+    console.warn("No se pudo sembrar el banco de preguntas:", e.message);
+  }
+}
+
+let storage = createLocalStorageAdapter();
+storageReady = initStorageAdapter();
+
+let session = {
+  rol: null,
+  codigo: null,
+  dupla: null,
+  preguntaIdx: 0
+};
+
+function generarCodigo() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let c = "";
+  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+
+function nuevaDuplaVacia() {
+  return {
+    codigo: null,
+    creadaEn: new Date().toISOString(),
+    taller: null,
+    madre: { nombre: null, edadHija: null, respuestas: {}, preguntaIdx: 0, completado: false, indices: null, fechaCompletado: null },
+    hija: { nombre: null, respuestas: {}, preguntaIdx: 0, completado: false, indices: null, fechaCompletado: null }
+  };
+}
+
+function mostrarPantalla(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.getElementById("main-container").className = (id === "screen-dashboard-admin" || id === "screen-admin-dupla-detalle") ? "container wide" : "container";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function cerrarSesion() {
+  sessionStorage.removeItem("mewe_session");
+  sessionStorage.removeItem("mewe_admin");
+  if (storage.logout) {
+    try { await storage.logout(); } catch (e) {}
+  }
+  if (supabaseClient) {
+    try {
+      const { data } = await supabaseClient.auth.getSession();
+      if (!data.session) await supabaseClient.auth.signInAnonymously();
+    } catch (e) {}
+  }
+  session = { rol: null, codigo: null, dupla: null, preguntaIdx: 0 };
+  mostrarPantalla("screen-portada");
+}
+
+let pantallaAnterior = "screen-portada";
+function mostrarCrisis() {
+  const actual = document.querySelector(".screen.active");
+  if (actual) pantallaAnterior = actual.id;
+  mostrarPantalla("screen-crisis");
+}
+function abrirPolitica() {
+  const actual = document.querySelector(".screen.active");
+  if (actual) pantallaAnterior = actual.id;
+  mostrarPantalla("screen-politica");
+}
+function volverDeCrisis() { mostrarPantalla(pantallaAnterior); }
+function volverDePolitica() { mostrarPantalla(pantallaAnterior); }
+
+function iniciarFlujo(rol) {
+  session.rol = rol;
+  if (rol === "madre") mostrarPantalla("screen-madre-acceso");
+  else if (rol === "hija") mostrarPantalla("screen-hija-acceso");
+}
+
+async function crearCuentaMadre() {
+  const nombre = document.getElementById("madre-nombre").value.trim();
+  const edadHija = document.getElementById("madre-edad-hija").value;
+  const taller = document.getElementById("madre-taller").value.trim() || null;
+  const acepta = document.getElementById("madre-acepta").checked;
+  const edadOK = document.getElementById("madre-edad").checked;
+  if (!nombre) { alert("Necesito un nombre o apodo"); return; }
+  if (!acepta || !edadOK) { alert("Para continuar, necesito que marques las dos casillas de consentimiento."); return; }
+  const codigo = generarCodigo();
+  const dupla = nuevaDuplaVacia();
+  dupla.codigo = codigo;
+  dupla.taller = taller;
+  dupla.madre.nombre = nombre;
+  dupla.madre.edadHija = edadHija;
+  dupla.madre.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
+  await storage.guardarDupla(codigo, dupla);
+  try { await storage.claimPairAccess(codigo, "madre"); } catch (e) {}
+  session.codigo = codigo;
+  session.dupla = dupla;
+  sessionStorage.setItem("mewe_session", JSON.stringify({ rol:"madre", codigo }));
+  document.getElementById("codigo-display-madre").textContent = codigo;
+  mostrarPantalla("screen-madre-codigo");
+}
+
+async function retomarMadre() {
+  const codigo = document.getElementById("madre-codigo-retomar").value.trim().toUpperCase();
+  if (codigo.length !== 6) { alert("El código tiene 6 caracteres"); return; }
+  try {
+    await storage.claimPairAccess(codigo, "madre");
+  } catch (e) {
+    alert(e.message || "No pudimos validar tu acceso con ese código.");
+    return;
+  }
+  const dupla = await storage.cargarDupla(codigo);
+  if (!dupla) { alert("No encontramos ese código"); return; }
+  if (!dupla.madre.nombre) { alert("Este código no fue creado por una madre"); return; }
+  session.codigo = codigo;
+  session.dupla = dupla;
+  sessionStorage.setItem("mewe_session", JSON.stringify({ rol:"madre", codigo }));
+  entrarADashboardMadre();
+}
+
+async function hijaIngresarConCodigo() {
+  const codigo = document.getElementById("hija-codigo").value.trim().toUpperCase();
+  if (codigo.length !== 6) { alert("El código tiene 6 caracteres"); return; }
+  try {
+    await storage.claimPairAccess(codigo, "hija");
+  } catch (e) {
+    alert(e.message || "No pudimos validar tu acceso con ese código.");
+    return;
+  }
+  const dupla = await storage.cargarDupla(codigo);
+  if (!dupla) { alert("No encontramos ese código. Pregúntale a tu mamá si lo escribió bien."); return; }
+  session.codigo = codigo;
+  session.dupla = dupla;
+  sessionStorage.setItem("mewe_session", JSON.stringify({ rol:"hija", codigo }));
+  if (!dupla.hija.nombre) {
+    mostrarPantalla("screen-hija-nombre");
+  } else {
+    entrarADashboardHija();
+  }
+}
+
+async function completarPerfilHija() {
+  const nombre = document.getElementById("hija-nombre").value.trim();
+  const acepta = document.getElementById("hija-acepta").checked;
+  if (!nombre) { alert("Pon tu nombre o apodo"); return; }
+  if (!acepta) { alert("Marca la casilla para continuar."); return; }
+  session.dupla.hija.nombre = nombre;
+  session.dupla.hija.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
+  await storage.guardarDupla(session.codigo, session.dupla);
+  entrarADashboardHija();
+}
+
+async function refrescarDupla() {
+  const d = await storage.cargarDupla(session.codigo);
+  if (d) session.dupla = d;
+}
+
+async function entrarADashboardMadre() {
+  await refrescarDupla();
+  const m = session.dupla.madre;
+  const h = session.dupla.hija;
+  document.getElementById("dash-madre-nombre").textContent = m.nombre;
+  document.getElementById("dash-madre-codigo").textContent = session.codigo;
+
+  const alertas = document.getElementById("dash-madre-alertas");
+  alertas.innerHTML = "";
+  if (m.completado && h.completado) {
+    alertas.innerHTML = `<div class="alerta-banner success">🌻 Ambas terminaron. Ya pueden ver el mapa de la dupla con el comparativo.</div>`;
+  } else if (m.completado && !h.completado) {
+    alertas.innerHTML = `<div class="alerta-banner">Ya completaste tu test. Falta que tu hija termine el suyo para ver el comparativo.</div>`;
+  }
+
+  const totalMadre = PREGUNTAS.madre.length;
+  const respondidasMadre = Object.keys(m.respuestas).length;
+  document.getElementById("dash-madre-test-card").innerHTML = renderTestCard("madre", m.nombre, respondidasMadre, totalMadre, m.completado);
+
+  const hijaPresente = !!h.nombre;
+  const totalHija = PREGUNTAS.hija.length;
+  const respondidasHija = Object.keys(h.respuestas).length;
+  if (!hijaPresente) {
+    document.getElementById("dash-madre-hija-card").innerHTML = `
+      <div class="callout-soft">
+        <strong style="color: var(--secondary);">Tu hija no ha entrado todavía.</strong><br>
+        Compártele el código <strong>${session.codigo}</strong> para que pueda hacer su test.
+      </div>`;
+  } else {
+    document.getElementById("dash-madre-hija-card").innerHTML = renderTestCard("hija-vista-madre", h.nombre, respondidasHija, totalHija, h.completado);
+  }
+
+  const comp = document.getElementById("dash-madre-comparativo-section");
+  if (m.completado && h.completado) {
+    comp.innerHTML = `
+      <h3 style="margin-top: 24px;">Mapa de la dupla</h3>
+      <div class="callout">
+        <p style="margin-bottom: 12px;">El cruce de los dos mapas está listo. Acá es donde aparece lo más rico para llevar al taller.</p>
+        <button class="btn btn-primary btn-sm" onclick="verComparativo()">Ver mapa comparativo</button>
+      </div>`;
+  } else {
+    comp.innerHTML = `
+      <h3 style="margin-top: 24px;">Mapa de la dupla</h3>
+      <div class="reveal-bloqueado">
+        <p style="margin: 0;">Se desbloquea cuando ambas terminen su test.</p>
+      </div>`;
+  }
+  mostrarPantalla("screen-dashboard-madre");
+}
+
+async function entrarADashboardHija() {
+  await refrescarDupla();
+  const h = session.dupla.hija;
+  document.getElementById("dash-hija-nombre").textContent = h.nombre;
+  const total = PREGUNTAS.hija.length;
+  const respondidas = Object.keys(h.respuestas).length;
+  document.getElementById("dash-hija-test-card").innerHTML = renderTestCard("hija", h.nombre, respondidas, total, h.completado);
+  mostrarPantalla("screen-dashboard-hija");
+}
+
+function renderTestCard(tipo, nombre, respondidas, total, completado) {
+  if (completado) {
+    const btn = tipo === "hija-vista-madre" ? "" : `<button class="btn btn-primary btn-sm" onclick="verReporteIndividual()">Ver mi reporte</button>`;
+    return `
+      <div class="dupla-row">
+        <div class="dupla-info">
+          <div class="dupla-nombre">${nombre} <span class="estado-pill estado-completo"><span class="dot"></span> Completado</span></div>
+          <div class="dupla-meta">${total} de ${total} preguntas respondidas</div>
+        </div>
+        <div class="dupla-actions">${btn}</div>
+      </div>`;
+  }
+  if (respondidas === 0) {
+    const btn = (tipo === "madre" || tipo === "hija") ? `<button class="btn btn-primary btn-sm" onclick="empezarTest('${tipo}')">Empezar test</button>` : '';
+    return `
+      <div class="dupla-row">
+        <div class="dupla-info">
+          <div class="dupla-nombre">${nombre} <span class="estado-pill estado-pendiente"><span class="dot"></span> Sin empezar</span></div>
+          <div class="dupla-meta">0 de ${total} preguntas</div>
+        </div>
+        <div class="dupla-actions">${btn}</div>
+      </div>`;
+  }
+  const pct = Math.round((respondidas / total) * 100);
+  const btn = (tipo === "madre" || tipo === "hija") ? `<button class="btn btn-primary btn-sm" onclick="continuarTest('${tipo}')">Continuar</button>` : '';
+  return `
+    <div class="dupla-row">
+      <div class="dupla-info">
+        <div class="dupla-nombre">${nombre} <span class="estado-pill estado-progreso"><span class="dot"></span> En progreso · ${pct}%</span></div>
+        <div class="progreso-bar" style="margin-top:8px;"><div class="progreso-fill" style="width:${pct}%"></div></div>
+        <div class="dupla-meta">${respondidas} de ${total} preguntas</div>
+      </div>
+      <div class="dupla-actions">${btn}</div>
+    </div>`;
+}
+
+function empezarTest(tipo) {
+  session.preguntaIdx = 0;
+  mostrarPantalla("screen-escala");
+}
+function continuarTest(tipo) {
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  session.preguntaIdx = persona.preguntaIdx || 0;
+  mostrarPreguntaActual();
+  mostrarPantalla("screen-test");
+}
+function iniciarTest() {
+  session.preguntaIdx = 0;
+  mostrarPreguntaActual();
+  mostrarPantalla("screen-test");
+}
+function continuarDespuesPausa() {
+  mostrarPreguntaActual();
+  mostrarPantalla("screen-test");
+}
+async function pausarYVolver() {
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  persona.preguntaIdx = session.preguntaIdx;
+  await storage.guardarDupla(session.codigo, session.dupla);
+  if (session.rol === "madre") entrarADashboardMadre();
+  else entrarADashboardHija();
+}
+function volverAlDashboard() {
+  if (session.rol === "madre") entrarADashboardMadre();
+  else if (session.rol === "hija") entrarADashboardHija();
+  else mostrarPantalla("screen-dashboard-admin");
+}
+
+function preguntasActivas() {
+  return PREGUNTAS[session.rol];
+}
+
+function mostrarPreguntaActual() {
+  const preguntas = preguntasActivas();
+  if (session.preguntaIdx >= preguntas.length) {
+    finalizarTest();
+    return;
+  }
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  const p = preguntas[session.preguntaIdx];
+  const mod = MODULOS[p.mod];
+  const tag = document.getElementById("modulo-tag");
+  tag.textContent = mod.tag;
+  tag.className = "modulo-tag" + (session.rol === "hija" ? " hija-tag" : "");
+  document.getElementById("modulo-titulo").textContent = mod.titulo;
+  document.getElementById("modulo-sub").textContent = mod.sub;
+  const preguntasDelModulo = preguntas.filter(q => q.mod === p.mod);
+  const idxEnModulo = preguntasDelModulo.findIndex(q => q.id === p.id) + 1;
+  document.getElementById("pregunta-numero").textContent = `Pregunta ${idxEnModulo} de ${preguntasDelModulo.length}`;
+  document.getElementById("pregunta-texto").textContent = p.txt;
+  const pct = ((session.preguntaIdx + 1) / preguntas.length) * 100;
+  document.getElementById("progreso-fill").style.width = pct + "%";
+  document.getElementById("progreso-text").textContent = `Pregunta ${session.preguntaIdx + 1} de ${preguntas.length}`;
+  document.querySelectorAll(".escala-btn").forEach(b => b.classList.remove("selected"));
+  if (persona.respuestas[p.id]) {
+    const btn = document.querySelector(`.escala-btn[data-valor="${persona.respuestas[p.id]}"]`);
+    if (btn) btn.classList.add("selected");
+  }
+  document.getElementById("btn-atras").disabled = session.preguntaIdx === 0;
+}
+
+async function responder(valor) {
+  const preguntas = preguntasActivas();
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  const p = preguntas[session.preguntaIdx];
+  persona.respuestas[p.id] = valor;
+  document.querySelectorAll(".escala-btn").forEach(b => b.classList.remove("selected"));
+  document.querySelector(`.escala-btn[data-valor="${valor}"]`).classList.add("selected");
+  await storage.guardarDupla(session.codigo, session.dupla);
+  setTimeout(() => avanzar(), 280);
+}
+
+async function avanzar() {
+  session.preguntaIdx++;
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  persona.preguntaIdx = session.preguntaIdx;
+  await storage.guardarDupla(session.codigo, session.dupla);
+  const preguntas = preguntasActivas();
+  if (session.preguntaIdx >= preguntas.length) {
+    finalizarTest();
+    return;
+  }
+  const pausas = session.rol === "madre" ? [24, 48, 72] : [24];
+  if (pausas.includes(session.preguntaIdx)) {
+    mostrarPantalla("screen-pausa");
+    return;
+  }
+  mostrarPreguntaActual();
+}
+
+async function preguntaAnterior() {
+  if (session.preguntaIdx > 0) {
+    session.preguntaIdx--;
+    const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+    persona.preguntaIdx = session.preguntaIdx;
+    await storage.guardarDupla(session.codigo, session.dupla);
+    mostrarPreguntaActual();
+  }
+}
+
+async function finalizarTest() {
+  mostrarPantalla("screen-procesando");
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  persona.completado = true;
+  persona.fechaCompletado = new Date().toISOString();
+  persona.indices = calcularIndices(session.rol, persona.respuestas);
+  await storage.guardarDupla(session.codigo, session.dupla);
+  setTimeout(() => verReporteIndividual(), 2000);
+}
+
+function calcularIndices(rol, respuestas) {
+  const preguntas = PREGUNTAS[rol];
+  const indices = {};
+  for (const dim of Object.keys(INDICES_NOMBRES)) {
+    const preguntasDeDim = preguntas.filter(p => p.dim === dim);
+    let suma = 0, pesos = 0;
+    for (const p of preguntasDeDim) {
+      const resp = respuestas[p.id];
+      if (resp == null) continue;
+      const v = p.signo === 1 ? resp : (6 - resp);
+      suma += v * p.peso;
+      pesos += p.peso;
+    }
+    indices[dim] = pesos === 0 ? null : Math.round(((suma / pesos) - 1) * 25);
+  }
+  const W = { seguridad:0.20, validacion:0.18, apertura:0.15, presencia:0.12, conexion_familiar:0.10, regulacion:0.10, saturacion:0.08, presion_social:0.07 };
+  let s = 0, pT = 0;
+  for (const d in W) {
+    if (indices[d] == null) continue;
+    const v = INDICES_INVERTIDOS.includes(d) ? (100 - indices[d]) : indices[d];
+    s += v * W[d]; pT += W[d];
+  }
+  indices.conciencia_relacional = pT > 0 ? Math.round(s / pT) : null;
+  return indices;
+}
+
+function clasificarZona(dim, valor) {
+  if (valor == null) return "atencion";
+  if (INDICES_INVERTIDOS.includes(dim)) {
+    if (valor >= 66) return "cuidado";
+    if (valor >= 41) return "atencion";
+    return "sostenida";
+  }
+  if (valor <= 40) return "cuidado";
+  if (valor <= 65) return "atencion";
+  return "sostenida";
+}
+
+function clasificarCuadrante(indices) {
+  const seg = (indices.seguridad + (indices.conexion_familiar || indices.seguridad)) / 2;
+  const conex = ((indices.presencia || 50) + (indices.validacion || 50) + (indices.apertura || 50)) / 3;
+  const segAlta = seg >= 55, conexAlta = conex >= 55;
+  if (segAlta && conexAlta) return { id:"nos_vemos", titulo:"Nos vemos", emoji:"🌻", desc:"Seguridad alta, conexión alta. Hay base y hay conversación. La oportunidad: profundizar." };
+  if (segAlta && !conexAlta) return { id:"nos_protegemos", titulo:"Nos protegemos", emoji:"🌱", desc:"Seguridad alta, conexión baja. La oportunidad: abrir el canal." };
+  if (!segAlta && conexAlta) return { id:"nos_escuchamos", titulo:"Nos escuchamos", emoji:"🌿", desc:"Seguridad baja, conexión alta. La oportunidad: bajar la activación del sistema." };
+  return { id:"nos_necesitamos_comprender_mejor", titulo:"Nos necesitamos comprender mejor", emoji:"🔥", desc:"Seguridad baja, conexión baja. La oportunidad: recordar cuándo sí." };
+}
+
+async function verReporteIndividual() {
+  await refrescarDupla();
+  const persona = session.rol === "madre" ? session.dupla.madre : session.dupla.hija;
+  if (!persona.indices) { alert("Falta calcular el reporte"); return; }
+  generarReporteIndividual(persona);
+  mostrarPantalla("screen-reporte-individual");
+}
+
+function generarReporteIndividual(persona) {
+  const indices = persona.indices;
+  const cuadrante = clasificarCuadrante(indices);
+  const cont = document.getElementById("reporte-individual-contenido");
+  const dims = Object.keys(INDICES_NOMBRES).sort((a, b) => {
+    const orden = { cuidado:0, atencion:1, sostenida:2 };
+    return orden[clasificarZona(a, indices[a])] - orden[clasificarZona(b, indices[b])];
+  });
+  const cardIndice = dim => {
+    const v = indices[dim];
+    const zona = clasificarZona(dim, v);
+    const label = zona[0].toUpperCase() + zona.slice(1);
+    return `
+      <div class="indice-card zona-${zona}">
+        <div class="indice-header">
+          <span class="indice-nombre">${INDICES_NOMBRES[dim]}</span>
+          <span><span class="indice-score">${v}</span><span class="indice-zona">${label}</span></span>
+        </div>
+        <div class="indice-texto">${COPY_INDICES[dim][zona]}</div>
+      </div>`;
+  };
+  const cuadIds = ["nos_protegemos", "nos_vemos", "nos_necesitamos_comprender_mejor", "nos_escuchamos"];
+  const cuadData = {
+    nos_protegemos: { emoji:"🌱", nom:"Nos protegemos", desc:"Seguridad alta, conexión baja" },
+    nos_vemos: { emoji:"🌻", nom:"Nos vemos", desc:"Seguridad alta, conexión alta" },
+    nos_necesitamos_comprender_mejor: { emoji:"🔥", nom:"Nos necesitamos comprender mejor", desc:"Seguridad baja, conexión baja" },
+    nos_escuchamos: { emoji:"🌿", nom:"Nos escuchamos", desc:"Seguridad baja, conexión alta" }
+  };
+  let cuadHTML = '<div class="cuadrantes-grid">';
+  for (const id of cuadIds) {
+    const c = cuadData[id];
+    cuadHTML += `<div class="cuadrante-cell ${id === cuadrante.id ? "activo" : ""}"><strong>${c.emoji} ${c.nom}</strong><span class="muted" style="font-size:12px;">${c.desc}</span></div>`;
+  }
+  cuadHTML += '</div>';
+  cont.innerHTML = `
+    <div class="reporte-section center" style="border-bottom:none; padding-bottom:8px;">
+      <span class="logo-me" style="font-size:36px;">ME</span><span class="logo-we" style="font-size:36px;">WE</span>
+      <div class="muted" style="margin-top:8px;">Mapa de Conciencia Relacional · ${session.rol === "madre" ? "vista madre" : "vista hija"}</div>
+    </div>
+    <div class="reporte-section">
+      <h2 style="font-size:22px;">Hola, ${persona.nombre} 🌿</h2>
+      <p>Lo que ves no es un diagnóstico. Es una foto del momento. Sirve para que el taller tenga de dónde agarrar.</p>
+    </div>
+    <div class="reporte-section">
+      <h3>La foto del vínculo desde tu lente</h3>
+      <div class="cuadrante-mapa">
+        <div style="text-align:center; padding:12px 0;">
+          <div style="font-size:48px;">${cuadrante.emoji}</div>
+          <div style="font-size:22px; font-weight:500; color:var(--primary); margin:8px 0;">${cuadrante.titulo}</div>
+        </div>
+        ${cuadHTML}
+        <p style="margin-top:16px; font-style:italic; color:var(--muted); font-size:15px;">${cuadrante.desc}</p>
+      </div>
+    </div>
+    <div class="reporte-section">
+      <h3>Tu mapa</h3>
+      <div class="chart-container">
+        <div class="chart-titulo">Las 8 dimensiones del vínculo</div>
+        <canvas id="chart-radar-ind" style="max-height:380px;"></canvas>
+      </div>
+    </div>
+    <div class="reporte-section">
+      <h3>Lo que vale la pena mirar con calma</h3>
+      ${dims.map(cardIndice).join("")}
+    </div>
+    <div class="reporte-section">
+      <h3>Conciencia Relacional Me We</h3>
+      ${cardIndice("conciencia_relacional")}
+    </div>`;
+  setTimeout(() => dibujarRadar("chart-radar-ind", indices, persona.nombre, "#C0573C"), 100);
+}
+
+function dibujarRadar(canvasId, indices, label, color) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  if (ctx._chart) ctx._chart.destroy();
+  const data = [
+    indices.seguridad, indices.regulacion, indices.presencia, indices.validacion,
+    indices.apertura, 100 - (indices.saturacion || 0), 100 - (indices.presion_social || 0), indices.conexion_familiar
+  ];
+  ctx._chart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Seguridad', 'Regulación', 'Presencia', 'Validación', 'Apertura', 'Calma', 'Sin presión', 'Conexión familiar'],
+      datasets: [{ label, data, backgroundColor: color + "2E", borderColor: color, borderWidth: 2, pointBackgroundColor: color, pointRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, grid: { color: 'rgba(216,200,181,0.5)' }, angleLines: { color: 'rgba(216,200,181,0.5)' }, pointLabels: { font: { size: 11 }, color: '#2D2D2D' } } }, plugins: { legend: { display: false } } }
+  });
+}
+
+function dibujarRadarComparativo(canvasId, indicesM, indicesH) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  if (ctx._chart) ctx._chart.destroy();
+  const dataM = [indicesM.seguridad, indicesM.regulacion, indicesM.presencia, indicesM.validacion, indicesM.apertura, 100 - indicesM.saturacion, 100 - indicesM.presion_social, indicesM.conexion_familiar];
+  const dataH = [indicesH.seguridad, indicesH.regulacion, indicesH.presencia, indicesH.validacion, indicesH.apertura, 100 - indicesH.saturacion, 100 - indicesH.presion_social, indicesH.conexion_familiar];
+  ctx._chart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Seguridad', 'Regulación', 'Presencia', 'Validación', 'Apertura', 'Calma', 'Sin presión', 'Conexión familiar'],
+      datasets: [
+        { label: "Madre", data: dataM, backgroundColor: "rgba(192,87,60,0.2)", borderColor: "#C0573C", borderWidth: 2, pointBackgroundColor: "#C0573C", pointRadius: 4 },
+        { label: "Hija", data: dataH, backgroundColor: "rgba(122,140,93,0.2)", borderColor: "#7A8C5D", borderWidth: 2, pointBackgroundColor: "#7A8C5D", pointRadius: 4 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, grid: { color: 'rgba(216,200,181,0.5)' }, angleLines: { color: 'rgba(216,200,181,0.5)' }, pointLabels: { font: { size: 11 }, color: '#2D2D2D' } } }, plugins: { legend: { position: 'bottom', labels: { padding: 16 } } } }
+  });
+}
+
+function calcularBrechas(indicesM, indicesH) {
+  const brechas = {};
+  const dims = ["seguridad", "regulacion", "presencia", "validacion", "apertura", "saturacion", "presion_social", "conexion_familiar"];
+  for (const d of dims) {
+    brechas[d] = Math.abs((indicesM[d] || 0) - (indicesH[d] || 0));
+  }
+  brechas.promedio = Math.round(dims.reduce((s, d) => s + brechas[d], 0) / dims.length);
+  return brechas;
+}
+
+async function verComparativo() {
+  await refrescarDupla();
+  const m = session.dupla.madre, h = session.dupla.hija;
+  if (!m.completado || !h.completado) { alert("Ambas deben terminar primero"); return; }
+  generarReporteComparativo(m, h);
+  mostrarPantalla("screen-reporte-comparativo");
+}
+
+function generarReporteComparativo(m, h) {
+  const cont = document.getElementById("reporte-comparativo-contenido");
+  const brechas = calcularBrechas(m.indices, h.indices);
+  const cuadM = clasificarCuadrante(m.indices);
+  const cuadH = clasificarCuadrante(h.indices);
+  const dimsOrdenadas = Object.keys(INDICES_NOMBRES).sort((a, b) => brechas[b] - brechas[a]);
+  const brechaTexto = brechas.promedio <= 15 ? "Lecturas alineadas. Lo que cada una ve está cerca de lo que la otra siente." :
+    brechas.promedio <= 30 ? "Brecha moderada. Hay desajustes finos. El taller dedica un ejercicio entero a esto." :
+    "Brecha alta. Una de las dos (o ambas) está leyendo a la otra desde una imagen, no desde la persona real. Trabajo prioritario.";
+  cont.innerHTML = `
+    <div class="reporte-section center" style="border-bottom:none; padding-bottom:8px;">
+      <span class="logo-me" style="font-size:36px;">ME</span><span class="logo-we" style="font-size:36px;">WE</span>
+      <div class="muted" style="margin-top:8px;">Mapa de la dupla · ${m.nombre} + ${h.nombre}</div>
+    </div>
+    <div class="reporte-section">
+      <h3>Cómo ve cada una el vínculo</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+        <div class="cuadrante-mapa" style="margin:0;">
+          <h4 style="margin-bottom:4px; color: var(--primary);">${m.nombre} ve:</h4>
+          <p style="margin:0; font-size:14px;">${cuadM.emoji} <strong>${cuadM.titulo}</strong></p>
+          <p style="margin:8px 0 0; font-size:13px; color:var(--muted);">${cuadM.desc}</p>
+        </div>
+        <div class="cuadrante-mapa" style="margin:0;">
+          <h4 style="margin-bottom:4px; color: var(--secondary);">${h.nombre} ve:</h4>
+          <p style="margin:0; font-size:14px;">${cuadH.emoji} <strong>${cuadH.titulo}</strong></p>
+          <p style="margin:8px 0 0; font-size:13px; color:var(--muted);">${cuadH.desc}</p>
+        </div>
+      </div>
+    </div>
+    <div class="reporte-section">
+      <h3>Mapa comparativo</h3>
+      <div class="chart-container">
+        <div class="chart-titulo">${m.nombre} (terracota) vs ${h.nombre} (verde oliva)</div>
+        <canvas id="chart-radar-comp" style="max-height:420px;"></canvas>
+      </div>
+    </div>
+    <div class="reporte-section">
+      <h3>Brechas de percepción</h3>
+      <p>Brecha promedio: <strong>${brechas.promedio} puntos</strong>. ${brechaTexto}</p>
+      <div style="margin-top:16px;">
+        ${dimsOrdenadas.map(d => `
+          <div class="brecha-row">
+            <div class="brecha-label">${INDICES_NOMBRES[d]}</div>
+            <div class="brecha-bar-container">
+              <div class="brecha-bar-madre" style="width:${m.indices[d]}%;"></div>
+              <div class="brecha-bar-hija" style="width:${h.indices[d]}%;"></div>
+            </div>
+            <div class="brecha-value">±${brechas[d]}</div>
+          </div>`).join("")}
+      </div>
+      <p class="muted" style="font-size:13px; margin-top:12px;">Las dimensiones con mayor brecha son material vivo para el taller.</p>
+    </div>
+    <div class="reporte-section">
+      <h3>En el taller</h3>
+      <p>${
+        cuadM.id === cuadH.id ? `Las dos perciben el vínculo en el mismo cuadrante (${cuadM.titulo}). Esto es notable: hay sintonía en la lectura. El taller va a profundizar el patrón compartido.` :
+        `Cada una percibe el vínculo en un cuadrante distinto. La madre lo ve como "${cuadM.titulo}", la hija como "${cuadH.titulo}". El ejercicio del "espejo borroso" trabaja exactamente esto.`
+      }</p>
+    </div>`;
+  setTimeout(() => dibujarRadarComparativo("chart-radar-comp", m.indices, h.indices), 100);
+}
+
+async function descargarPDFIndividual() { await descargarPDFGenerico("reporte-individual-contenido", `MeWe_${session.rol}_individual.pdf`); }
+async function descargarPDFComparativo() { await descargarPDFGenerico("reporte-comparativo-contenido", `MeWe_dupla_comparativo.pdf`); }
+
+async function descargarPDFGenerico(idElemento, nombreArchivo) {
+  const btn = (typeof event !== "undefined" && event && event.target) ? event.target : null;
+  const orig = btn ? btn.textContent : "";
+  if (btn) {
+    btn.textContent = "Generando...";
+    btn.disabled = true;
+  }
+  try {
+    const c = document.getElementById(idElemento);
+    const canvas = await html2canvas(c, { backgroundColor: '#FBF5EE', scale: 1.6, useCORS: true, logging: false });
+    const imgW = 210, pageH = 297;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    let left = imgH, pos = 0;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const img = canvas.toDataURL('image/jpeg', 0.92);
+    pdf.addImage(img, 'JPEG', 0, pos, imgW, imgH);
+    left -= pageH;
+    while (left > 0) {
+      pos = left - imgH;
+      pdf.addPage();
+      pdf.addImage(img, 'JPEG', 0, pos, imgW, imgH);
+      left -= pageH;
+    }
+    pdf.save(nombreArchivo);
+  } catch (e) {
+    alert("Hubo un problema generando el PDF.");
+    console.error(e);
+  } finally {
+    if (btn) {
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
+  }
+}
+
+async function loginAdmin() {
+  const email = document.getElementById("admin-email").value.trim();
+  const pass = document.getElementById("admin-pass").value;
+  try {
+    await storage.loginAdmin(email, pass);
+    await seedQuestionBankForAdmin();
+    await entrarADashboardAdmin();
+  } catch (e) {
+    alert(e.message || "No fue posible iniciar sesión admin.");
+  }
+}
+
+async function entrarADashboardAdmin() {
+  mostrarPantalla("screen-dashboard-admin");
+  await renderDashboardAdmin();
+}
+
+async function renderDashboardAdmin() {
+  const duplas = await storage.listarDuplas();
+  renderTabDuplas(duplas);
+  renderTabMetricas(duplas);
+  renderTabTalleres(duplas);
+}
+
+function cambiarTab(tab) {
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.querySelector(`.nav-tab[data-tab="${tab}"]`).classList.add("active");
+  document.querySelectorAll(".admin-tab").forEach(t => t.style.display = "none");
+  document.getElementById("admin-tab-" + tab).style.display = "block";
+}
+
+function renderTabDuplas(duplas) {
+  const cont = document.getElementById("admin-tab-duplas");
+  if (duplas.length === 0) {
+    cont.innerHTML = `<div class="empty-state"><h4>Aún no hay duplas</h4><p>Cuando las madres creen su cuenta, aparecerán acá.</p></div>`;
+    return;
+  }
+  const totales = duplas.length;
+  const ambasCompletas = duplas.filter(d => d.madre.completado && d.hija.completado).length;
+  const enProgreso = duplas.filter(d => (Object.keys(d.madre.respuestas).length > 0 || Object.keys(d.hija.respuestas).length > 0) && !(d.madre.completado && d.hija.completado)).length;
+  const sinEmpezar = duplas.filter(d => Object.keys(d.madre.respuestas).length === 0 && Object.keys(d.hija.respuestas).length === 0).length;
+  cont.innerHTML = `
+    <div class="dashboard-stats">
+      <div class="stat-card"><div class="label">Total duplas</div><div class="value">${totales}</div></div>
+      <div class="stat-card"><div class="label">Completas</div><div class="value">${ambasCompletas}</div></div>
+      <div class="stat-card"><div class="label">En progreso</div><div class="value">${enProgreso}</div></div>
+      <div class="stat-card"><div class="label">Sin empezar</div><div class="value">${sinEmpezar}</div></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <h3 style="margin:0;">Duplas registradas</h3>
+      <button class="btn btn-secondary btn-sm" onclick="exportarDatosCSV()">Exportar datos a CSV</button>
+    </div>
+    ${duplas.sort((a,b) => new Date(b.creadaEn) - new Date(a.creadaEn)).map(d => renderDuplaRowAdmin(d)).join("")}`;
+}
+
+function renderDuplaRowAdmin(d) {
+  const mEstado = d.madre.completado ? "completo" : (Object.keys(d.madre.respuestas).length > 0 ? "progreso" : "pendiente");
+  const hEstado = d.hija.completado ? "completo" : (d.hija.nombre ? (Object.keys(d.hija.respuestas).length > 0 ? "progreso" : "pendiente") : "vacio");
+  const pillM = `<span class="estado-pill estado-${mEstado}"><span class="dot"></span> ${mEstado === "completo" ? "Completo" : mEstado === "progreso" ? Math.round(Object.keys(d.madre.respuestas).length / PREGUNTAS.madre.length * 100) + "%" : "Sin empezar"}</span>`;
+  const pillH = d.hija.nombre ?
+    `<span class="estado-pill estado-${hEstado}"><span class="dot"></span> ${hEstado === "completo" ? "Completo" : hEstado === "progreso" ? Math.round(Object.keys(d.hija.respuestas).length / PREGUNTAS.hija.length * 100) + "%" : "Sin empezar"}</span>` :
+    `<span class="badge badge-vacio">Hija no ha entrado</span>`;
+  const ambas = d.madre.completado && d.hija.completado;
+  return `
+    <div class="dupla-row">
+      <div class="dupla-info">
+        <div class="dupla-nombre">${d.madre.nombre || "(sin nombre)"} ${d.hija.nombre ? "+ " + d.hija.nombre : ""}</div>
+        <div class="dupla-meta">Código: <strong>${d.codigo}</strong> · ${d.taller ? "Taller: " + d.taller : "Sin taller asignado"} · Creada: ${new Date(d.creadaEn).toLocaleDateString()}</div>
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;"><span class="badge badge-madre">Madre</span>${pillM}<span class="badge badge-hija" style="margin-left:8px;">Hija</span>${pillH}</div>
+      </div>
+      <div class="dupla-actions">
+        <button class="btn btn-secondary btn-sm" onclick="verDetalleDuplaAdmin('${d.codigo}')">Ver detalle</button>
+        ${ambas ? `<button class="btn btn-primary btn-sm" onclick="verComparativoAdmin('${d.codigo}')">Ver mapa dupla</button>` : ''}
+      </div>
+    </div>`;
+}
+
+async function verDetalleDuplaAdmin(codigo) {
+  const d = await storage.cargarDupla(codigo);
+  if (!d) return;
+  const cont = document.getElementById("admin-detalle-contenido");
+  const renderPersona = (label, p, total, color) => {
+    if (!p.nombre) return `<div class="callout-soft"><strong>${label}:</strong> no ha entrado todavía.</div>`;
+    const pct = Math.round(Object.keys(p.respuestas).length / total * 100);
+    let body = `
+      <div class="dupla-row">
+        <div class="dupla-info">
+          <div class="dupla-nombre" style="color:${color};">${label}: ${p.nombre}</div>
+          <div class="dupla-meta">${Object.keys(p.respuestas).length} de ${total} respondidas (${pct}%)</div>
+        </div>
+      </div>`;
+    if (p.completado && p.indices) {
+      const cuad = clasificarCuadrante(p.indices);
+      body += `
+        <div class="cuadrante-mapa" style="margin-top:12px;">
+          <p style="margin:0;"><strong>${cuad.emoji} ${cuad.titulo}</strong> · ${cuad.desc}</p>
+        </div>
+        <div style="margin-top:16px;">
+          ${Object.keys(INDICES_NOMBRES).map(dim => {
+            const v = p.indices[dim], zona = clasificarZona(dim, v);
+            return `<div class="brecha-row"><div class="brecha-label">${INDICES_NOMBRES[dim]}</div><div class="brecha-bar-container"><div style="position:absolute;top:0;left:0;height:100%;background:${color}55;width:${v}%;border-radius:6px;"></div></div><div class="brecha-value">${v} · ${zona[0].toUpperCase()+zona.slice(1)}</div></div>`;
+          }).join("")}
+          <div class="brecha-row"><div class="brecha-label"><strong>Conciencia Relacional</strong></div><div class="brecha-bar-container"><div style="position:absolute;top:0;left:0;height:100%;background:${color}55;width:${p.indices.conciencia_relacional}%;border-radius:6px;"></div></div><div class="brecha-value"><strong>${p.indices.conciencia_relacional}</strong></div></div>
+        </div>`;
+    }
+    return body;
+  };
+  let html = `
+    <h2>Dupla ${d.codigo}</h2>
+    <p class="muted">Creada ${new Date(d.creadaEn).toLocaleDateString()} ${d.taller ? "· Taller: " + d.taller : ""}</p>
+    <h3 style="margin-top:24px;">Madre</h3>
+    ${renderPersona("Madre", d.madre, PREGUNTAS.madre.length, "#C0573C")}
+    <h3 style="margin-top:24px;">Hija</h3>
+    ${renderPersona("Hija", d.hija, PREGUNTAS.hija.length, "#7A8C5D")}`;
+  if (d.madre.completado && d.hija.completado) {
+    const brechas = calcularBrechas(d.madre.indices, d.hija.indices);
+    html += `
+      <h3 style="margin-top:24px;">Brechas de percepción</h3>
+      <p>Brecha promedio: <strong>${brechas.promedio} puntos</strong></p>
+      <div class="chart-container">
+        <canvas id="admin-radar-comp" style="max-height:400px;"></canvas>
+      </div>
+      <button class="btn btn-primary" onclick="verComparativoAdmin('${d.codigo}')">Ver reporte comparativo completo</button>`;
+  }
+  html += `
+    <div style="margin-top:48px; padding:20px; background:#FBEAE3; border-radius:12px; border:1px solid #C97A5F;">
+      <h4 style="color:#8C3F25; margin-bottom:8px;">Zona de administración sensible</h4>
+      <p style="font-size:14px; margin-bottom:12px;">Borra todos los datos de esta dupla en respuesta a una solicitud de derecho al olvido. Esta acción es <strong>irreversible</strong>: se borran las respuestas, índices, reportes y consentimientos. No se puede deshacer.</p>
+      <button class="btn btn-ghost btn-sm" style="border-color:#C97A5F; color:#8C3F25;" onclick="borrarDuplaAdmin('${d.codigo}')">Borrar esta dupla permanentemente</button>
+    </div>`;
+  cont.innerHTML = html;
+  if (d.madre.completado && d.hija.completado) {
+    setTimeout(() => dibujarRadarComparativo("admin-radar-comp", d.madre.indices, d.hija.indices), 100);
+  }
+  mostrarPantalla("screen-admin-dupla-detalle");
+}
+
+async function verComparativoAdmin(codigo) {
+  const d = await storage.cargarDupla(codigo);
+  if (!d || !d.madre.completado || !d.hija.completado) return;
+  session.codigo = codigo;
+  session.dupla = d;
+  session.rol = "admin";
+  generarReporteComparativo(d.madre, d.hija);
+  mostrarPantalla("screen-reporte-comparativo");
+}
+
+async function borrarDuplaAdmin(codigo) {
+  if (!confirm("¿Borrar permanentemente la dupla " + codigo + "? Esta acción no se puede deshacer.")) return;
+  const segundoOK = prompt('Para confirmar, escribe la palabra BORRAR en mayúsculas:');
+  if (segundoOK !== "BORRAR") { alert("Cancelado."); return; }
+  try {
+    if (storage.eliminarDupla) {
+      await storage.eliminarDupla(codigo);
+    } else {
+      localStorage.removeItem("mewe_dupla_" + codigo);
+    }
+    alert("Dupla eliminada. Los datos no son recuperables.");
+    mostrarPantalla("screen-dashboard-admin");
+    await renderDashboardAdmin();
+  } catch (e) {
+    alert("Error al borrar: " + e.message);
+  }
+}
+
+async function exportarDatosCSV() {
+  const duplas = await storage.listarDuplas();
+  let csv = "codigo,taller,creada_en,madre_nombre,madre_completado,madre_seguridad,madre_regulacion,madre_presencia,madre_validacion,madre_apertura,madre_saturacion,madre_presion_social,madre_conexion_familiar,madre_conciencia,hija_nombre,hija_completado,hija_seguridad,hija_regulacion,hija_presencia,hija_validacion,hija_apertura,hija_saturacion,hija_presion_social,hija_conexion_familiar,hija_conciencia\n";
+  for (const d of duplas) {
+    const m = d.madre, h = d.hija;
+    const mI = m.indices || {};
+    const hI = h.indices || {};
+    const safe = (v) => v == null ? "" : (typeof v === "string" ? '"' + v.replace(/"/g, '""') + '"' : v);
+    csv += [
+      safe(d.codigo), safe(d.taller), safe(d.creadaEn),
+      safe(m.nombre), m.completado ? "si" : "no",
+      safe(mI.seguridad), safe(mI.regulacion), safe(mI.presencia), safe(mI.validacion), safe(mI.apertura), safe(mI.saturacion), safe(mI.presion_social), safe(mI.conexion_familiar), safe(mI.conciencia_relacional),
+      safe(h.nombre), h.completado ? "si" : "no",
+      safe(hI.seguridad), safe(hI.regulacion), safe(hI.presencia), safe(hI.validacion), safe(hI.apertura), safe(hI.saturacion), safe(hI.presion_social), safe(hI.conexion_familiar), safe(hI.conciencia_relacional)
+    ].join(",") + "\n";
+  }
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "mewe_duplas_" + new Date().toISOString().slice(0,10) + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderTabMetricas(duplas) {
+  const cont = document.getElementById("admin-tab-metricas");
+  const completas = duplas.filter(d => d.madre.completado && d.hija.completado);
+  if (completas.length === 0) {
+    cont.innerHTML = `<div class="empty-state"><h4>Aún no hay duplas completas</h4><p>Las métricas agregadas aparecen cuando al menos una dupla ha completado ambos tests.</p></div>`;
+    return;
+  }
+  const promediosM = {}, promediosH = {};
+  for (const dim of Object.keys(INDICES_NOMBRES)) {
+    const valoresM = completas.map(d => d.madre.indices[dim]).filter(v => v != null);
+    const valoresH = completas.map(d => d.hija.indices[dim]).filter(v => v != null);
+    promediosM[dim] = valoresM.length ? Math.round(valoresM.reduce((s,v)=>s+v,0) / valoresM.length) : 0;
+    promediosH[dim] = valoresH.length ? Math.round(valoresH.reduce((s,v)=>s+v,0) / valoresH.length) : 0;
+  }
+  const cuadrantes = { nos_vemos:0, nos_protegemos:0, nos_escuchamos:0, nos_necesitamos_comprender_mejor:0 };
+  for (const d of completas) {
+    const c = clasificarCuadrante(d.madre.indices);
+    cuadrantes[c.id]++;
+  }
+  const brechasPromedio = {};
+  for (const dim of Object.keys(INDICES_NOMBRES)) {
+    const b = completas.map(d => Math.abs(d.madre.indices[dim] - d.hija.indices[dim]));
+    brechasPromedio[dim] = b.length ? Math.round(b.reduce((s,v)=>s+v,0) / b.length) : 0;
+  }
+  cont.innerHTML = `
+    <h3>Métricas agregadas · ${completas.length} duplas completas</h3>
+    <div class="chart-container">
+      <div class="chart-titulo">Promedio del grupo · madres vs hijas</div>
+      <canvas id="chart-promedios" style="max-height:380px;"></canvas>
+    </div>
+    <h3>Distribución por cuadrante (lente de la madre)</h3>
+    <div class="dashboard-stats">
+      <div class="stat-card"><div class="label">🌻 Nos vemos</div><div class="value">${cuadrantes.nos_vemos}</div></div>
+      <div class="stat-card"><div class="label">🌱 Nos protegemos</div><div class="value">${cuadrantes.nos_protegemos}</div></div>
+      <div class="stat-card"><div class="label">🌿 Nos escuchamos</div><div class="value">${cuadrantes.nos_escuchamos}</div></div>
+      <div class="stat-card"><div class="label">🔥 Nos comprender mejor</div><div class="value">${cuadrantes.nos_necesitamos_comprender_mejor}</div></div>
+    </div>
+    <h3>Brechas promedio del grupo</h3>
+    <div style="margin-top:16px;">
+      ${Object.keys(INDICES_NOMBRES).sort((a,b)=>brechasPromedio[b]-brechasPromedio[a]).map(d => `
+        <div class="brecha-row">
+          <div class="brecha-label">${INDICES_NOMBRES[d]}</div>
+          <div class="brecha-bar-container"><div style="position:absolute;top:0;left:0;height:100%;background:rgba(192,87,60,0.35);width:${Math.min(brechasPromedio[d]*2,100)}%;border-radius:6px;"></div></div>
+          <div class="brecha-value">±${brechasPromedio[d]}</div>
+        </div>`).join("")}
+    </div>`;
+  setTimeout(() => dibujarRadarComparativo("chart-promedios", promediosM, promediosH), 100);
+}
+
+function renderTabTalleres(duplas) {
+  const cont = document.getElementById("admin-tab-talleres");
+  const grupos = {};
+  for (const d of duplas) {
+    const k = d.taller || "Sin taller asignado";
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(d);
+  }
+  const claves = Object.keys(grupos);
+  if (claves.length === 0) {
+    cont.innerHTML = `<div class="empty-state"><h4>Aún no hay duplas registradas</h4></div>`;
+    return;
+  }
+  cont.innerHTML = claves.map(k => `
+    <h3>${k}</h3>
+    <p class="muted">${grupos[k].length} dupla${grupos[k].length === 1 ? '' : 's'}</p>
+    ${grupos[k].map(d => renderDuplaRowAdmin(d)).join("")}
+  `).join("");
+}
+
+window.addEventListener("load", async () => {
+  await storageReady;
+  const isAdmin = storage.isAdminSession ? await storage.isAdminSession() : sessionStorage.getItem("mewe_admin") === "1";
+  if (isAdmin) {
+    await seedQuestionBankForAdmin();
+    await entrarADashboardAdmin();
+    return;
+  }
+  const ses = sessionStorage.getItem("mewe_session");
+  if (ses) {
+    const { rol, codigo } = JSON.parse(ses);
+    session.rol = rol;
+    session.codigo = codigo;
+    if (storage.claimPairAccess && (rol === "madre" || rol === "hija")) {
+      try {
+        await storage.claimPairAccess(codigo, rol);
+      } catch (e) {
+        sessionStorage.removeItem("mewe_session");
+        return;
+      }
+    }
+    const d = await storage.cargarDupla(codigo);
+    if (d) {
+      session.dupla = d;
+      if (rol === "madre") entrarADashboardMadre();
+      else if (rol === "hija") entrarADashboardHija();
+    }
+  }
+});
+</script>
+</body>
+</html>
