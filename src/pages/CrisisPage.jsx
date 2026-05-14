@@ -14,6 +14,8 @@ export function CrisisPage({ onBack }) {
       </ul>
       <h3>Si estás fuera de Ecuador</h3>
       <p>{CRISIS_INFO.global}</p>
+      <h3>Acompañamiento profesional</h3>
+      <p>{CRISIS_INFO.professional}</p>
     </Shell>
   );
 }

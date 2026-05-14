@@ -1,4 +1,5 @@
 import { ConsentBox, Field, PageHeader, Panel, Shell } from "../components/ui";
+import { MOTHER_CONSENT_PARAGRAPHS } from "../data/content";
 
 export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
   return (
@@ -35,14 +36,21 @@ export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
         </Field>
       </Panel>
       <ConsentBox>
-        <p>Me We es una herramienta experiencial, no un servicio de salud mental ni diagnóstico clínico.</p>
+        <h4>Antes de continuar, lee esto con calma</h4>
+        <div className="consent-scroll">
+          {MOTHER_CONSENT_PARAGRAPHS.map((paragraph) => (
+            <p key={paragraph.title}>
+              <strong>{paragraph.title}</strong> {paragraph.text}
+            </p>
+          ))}
+        </div>
         <label>
           <input
             type="checkbox"
             checked={!!form.acepta}
             onChange={(e) => setForm((f) => ({ ...f, acepta: e.target.checked }))}
           />
-          He leído y acepto las condiciones de uso.
+          He leído y acepto las condiciones de uso. Autorizo el procesamiento de mis datos y los de mi hija para los fines descritos.
         </label>
         <label>
           <input

@@ -379,6 +379,35 @@ select:focus {
   margin-top: 4px;
 }
 
+.consent h4 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.consent-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.consent-scroll p {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.consent strong,
+.legal-doc strong {
+  color: var(--primary-dark);
+}
+
 .code {
   font-size: clamp(2rem, 8vw, 3.3rem);
   letter-spacing: 0.18em;
@@ -588,6 +617,33 @@ select:focus {
 .actions.stacked {
   align-items: stretch;
   flex-direction: column;
+}
+
+.legal-doc {
+  display: grid;
+  gap: 14px;
+}
+
+.legal-doc section {
+  background: rgba(255, 253, 249, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.legal-doc h3 {
+  font-size: 1.35rem;
+  margin-bottom: 8px;
+}
+
+.legal-doc ul {
+  margin: 0 0 12px 20px;
+  padding: 0;
+}
+
+.legal-doc li {
+  margin-bottom: 7px;
+  line-height: 1.5;
 }
 
 footer {

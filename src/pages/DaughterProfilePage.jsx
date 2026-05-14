@@ -1,4 +1,5 @@
 import { ConsentBox, Field, Shell } from "../components/ui";
+import { DAUGHTER_ASSENT_PARAGRAPHS } from "../data/content";
 
 export function DaughterProfilePage({ form, setForm, onSubmit }) {
   return (
@@ -12,9 +13,12 @@ export function DaughterProfilePage({ form, setForm, onSubmit }) {
         />
       </Field>
       <ConsentBox>
-        <p>
-          Lo que respondas lo verá tu mamá (después) y la facilitadora del taller. No lo verá tu colegio ni tus amigas.
-        </p>
+        <h4>Antes de empezar, dos cosas importantes</h4>
+        {DAUGHTER_ASSENT_PARAGRAPHS.map((paragraph) => (
+          <p key={paragraph.title}>
+            <strong>{paragraph.title}</strong> {paragraph.text}
+          </p>
+        ))}
         <label>
           <input
             type="checkbox"
