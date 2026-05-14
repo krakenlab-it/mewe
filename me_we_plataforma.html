@@ -543,6 +543,24 @@
 </div>
 
 <script>
+  (function () {
+    var viteUrl = "%VITE_SUPABASE_URL%";
+    var viteKey = "%VITE_SUPABASE_PUBLISHABLE_KEY%";
+    var viteMode = "%VITE_MEWE_BACKEND_MODE%";
+
+    if (!window.MEWE_SUPABASE_URL && viteUrl && !viteUrl.startsWith("%VITE_")) {
+      window.MEWE_SUPABASE_URL = viteUrl;
+    }
+    if (!window.MEWE_SUPABASE_PUBLISHABLE_KEY && viteKey && !viteKey.startsWith("%VITE_")) {
+      window.MEWE_SUPABASE_PUBLISHABLE_KEY = viteKey;
+    }
+    if (!window.MEWE_BACKEND_MODE && viteMode && !viteMode.startsWith("%VITE_")) {
+      window.MEWE_BACKEND_MODE = viteMode;
+    }
+  })();
+</script>
+
+<script>
 const LOCAL_ADMIN_PASS = (window.MEWE_LOCAL_ADMIN_PASS || "mewe2026");
 const MEWE_BACKEND_MODE = (window.MEWE_BACKEND_MODE || "auto").toLowerCase();
 const SUPABASE_URL = window.MEWE_SUPABASE_URL || "";
