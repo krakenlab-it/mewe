@@ -73,6 +73,20 @@ export function calcularBrechas(indicesM, indicesH) {
   return brechas;
 }
 
+export function interpretarBrechaPromedio(promedio) {
+  if (promedio <= 15) {
+    return "Lecturas alineadas. Lo que cada una ve está cerca de lo que la otra siente.";
+  }
+  if (promedio <= 30) {
+    return "Brecha moderada. Hay desajustes finos. El taller dedica un ejercicio entero a esto.";
+  }
+  return "Brecha alta. Una de las dos (o ambas) está leyendo a la otra desde una imagen, no desde la persona real. Trabajo prioritario.";
+}
+
+export function ordenarDimensionesPorBrecha(brechas) {
+  return Object.keys(INDICES_NOMBRES).sort((a, b) => (brechas[b] || 0) - (brechas[a] || 0));
+}
+
 export function sortDimsByZone(indices) {
   const orden = { cuidado: 0, atencion: 1, sostenida: 2 };
   return Object.keys(INDICES_NOMBRES).sort(

@@ -23,7 +23,9 @@ import {
   calcularIndices,
   clasificarCuadrante,
   generarCodigo,
+  interpretarBrechaPromedio,
   nuevaDuplaVacia,
+  ordenarDimensionesPorBrecha,
   sortDimsByZone,
 } from "./lib/scoring";
 import { clearSession, getSavedSession, saveSession, setAdminSession } from "./lib/session";
@@ -43,6 +45,7 @@ export default function App() {
   const [reportCuadrante, setReportCuadrante] = useState(null);
   const [reportRole, setReportRole] = useState("madre");
   const [comparativeBrechas, setComparativeBrechas] = useState({});
+  const [comparativeMeta, setComparativeMeta] = useState(null);
   const [lastMainScreen, setLastMainScreen] = useState("cover");
 
   const testQuestions = useMemo(
@@ -112,12 +115,22 @@ export default function App() {
   }
 
   async function logout() {
+    setScreen("cover");
+    setLastMainScreen("cover");
     clearSession();
     setSession({ rol: null, codigo: null });
     setDupla(null);
+    setDuplasAdmin([]);
+    setForm({});
+    setComparativeMeta(null);
+    setComparativeBrechas({});
     setAdminSession(false);
-    if (storage?.logout) await storage.logout();
-    setScreen("cover");
+
+    try {
+      if (storage?.logout) await storage.logout();
+    } catch (_e) {
+      // The UI has already left the authenticated area.
+    }
   }
 
   async function createMother() {
@@ -128,20 +141,26 @@ export default function App() {
     if (!nombre) return window.alert("Necesito un nombre o apodo");
     if (!form.acepta || !form.mayor) return window.alert("Marca las dos casillas de consentimiento.");
 
-    const codigo = generarCodigo();
-    const payload = nuevaDuplaVacia();
-    payload.codigo = codigo;
-    payload.taller = taller;
-    payload.madre.nombre = nombre;
-    payload.madre.edadHija = edadHija;
-    payload.madre.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
+    try {
+      await storage.startFreshAnonymousSession?.();
 
-    await storage.guardarDupla(codigo, payload);
-    await storage.claimPairAccess(codigo, "madre");
-    saveSession("madre", codigo);
-    setSession({ rol: "madre", codigo });
-    setDupla(payload);
-    setScreen("mother_code");
+      const codigo = generarCodigo();
+      const payload = nuevaDuplaVacia();
+      payload.codigo = codigo;
+      payload.taller = taller;
+      payload.madre.nombre = nombre;
+      payload.madre.edadHija = edadHija;
+      payload.madre.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
+
+      await storage.guardarDupla(codigo, payload);
+      await storage.claimPairAccess(codigo, "madre");
+      saveSession("madre", codigo);
+      setSession({ rol: "madre", codigo });
+      setDupla(payload);
+      setScreen("mother_code");
+    } catch (e) {
+      window.alert(e.message || "No pudimos crear la dupla. Intenta de nuevo.");
+    }
   }
 
   async function resumeMother() {
@@ -247,8 +266,21 @@ export default function App() {
     if (!dupla?.madre?.completado || !dupla?.hija?.completado) {
       return window.alert("Ambas deben terminar primero");
     }
-    setComparativeBrechas(calcularBrechas(dupla.madre.indices || {}, dupla.hija.indices || {}));
+    buildComparativeReport(dupla);
     setScreen("report_comparative");
+  }
+
+  function buildComparativeReport(pair) {
+    const brechas = calcularBrechas(pair.madre.indices || {}, pair.hija.indices || {});
+    const cuadM = clasificarCuadrante(pair.madre.indices || {});
+    const cuadH = clasificarCuadrante(pair.hija.indices || {});
+    setComparativeBrechas(brechas);
+    setComparativeMeta({
+      cuadM,
+      cuadH,
+      brechaTexto: interpretarBrechaPromedio(brechas.promedio),
+      dimsOrdenadas: ordenarDimensionesPorBrecha(brechas),
+    });
   }
 
   async function loginAdmin() {
@@ -284,7 +316,8 @@ export default function App() {
     const pair = await storage.cargarDupla(codigo);
     if (!pair) return;
     setDupla(pair);
-    setComparativeBrechas(calcularBrechas(pair.madre.indices || {}, pair.hija.indices || {}));
+    setLastMainScreen("admin_dashboard");
+    buildComparativeReport(pair);
     setScreen("report_comparative");
   }
 
@@ -307,7 +340,7 @@ export default function App() {
   if (screen === "dashboard_daughter") return <DashboardDaughterPage dupla={dupla} onLogout={logout} onStartTest={startTest} onViewReport={viewIndividualReport} onGoCrisis={() => openInfoPage("crisis")} onGoPolicy={() => openInfoPage("policy")} />;
   if (screen === "test") return <TestPage rol={session.rol} pregunta={testQuestions[testIndex]} index={testIndex} total={testQuestions.length} onAnswer={answerQuestion} onPause={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} onBack={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} />;
   if (screen === "report_individual") return <IndividualReportPage persona={dupla?.[reportRole]} rol={reportRole} cards={reportCards} cuadrante={reportCuadrante} onBack={() => setScreen(reportRole === "madre" ? "dashboard_mother" : "dashboard_daughter")} onLogout={logout} />;
-  if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} />;
+  if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} meta={comparativeMeta} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} />;
   if (screen === "admin_login") return <AdminLoginPage form={form} setForm={setForm} onSubmit={loginAdmin} onBack={() => setScreen("role")} />;
   if (screen === "admin_dashboard") return <AdminDashboardPage duplas={duplasAdmin} onRefresh={refreshAdmin} onOpenComparative={openComparativeFromAdmin} onDelete={deletePair} onLogout={logout} />;
   if (screen === "crisis") return <CrisisPage onBack={() => setScreen(lastMainScreen)} />;

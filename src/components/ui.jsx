@@ -22,8 +22,8 @@ export function TopBar({ title, subtitle, onBack, onLogout }) {
         {subtitle ? <p className="muted">{subtitle}</p> : null}
       </div>
       <div className="top-actions">
-        {onBack ? <button className="ghost small" onClick={onBack}>Volver</button> : null}
-        {onLogout ? <button className="ghost small" onClick={onLogout}>Salir</button> : null}
+        {onBack ? <button type="button" className="ghost small" onClick={onBack}>Volver</button> : null}
+        {onLogout ? <button type="button" className="ghost small" onClick={onLogout}>Salir</button> : null}
       </div>
     </div>
   );

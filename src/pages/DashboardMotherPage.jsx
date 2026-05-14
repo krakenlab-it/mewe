@@ -1,4 +1,5 @@
 import { Panel, Shell, StatusCard, TopBar } from "../components/ui";
+import { PREGUNTAS } from "../data/questions";
 
 export function DashboardMotherPage({
   dupla,
@@ -13,6 +14,8 @@ export function DashboardMotherPage({
   const h = dupla.hija;
   const answeredMother = Object.keys(m.respuestas || {}).length;
   const answeredDaughter = Object.keys(h.respuestas || {}).length;
+  const totalMother = PREGUNTAS.madre.length;
+  const totalDaughter = PREGUNTAS.hija.length;
 
   return (
     <Shell>
@@ -23,7 +26,7 @@ export function DashboardMotherPage({
           <StatusCard
             title={m.nombre || "Madre"}
             answered={answeredMother}
-            total={96}
+            total={totalMother}
             complete={m.completado}
             onAction={m.completado ? onViewReport : onStartTest}
             actionText={m.completado ? "Ver reporte" : answeredMother > 0 ? "Continuar" : "Empezar"}
@@ -33,7 +36,7 @@ export function DashboardMotherPage({
         <Panel>
           <span className="eyebrow">Tu hija</span>
           {h.nombre ? (
-            <StatusCard title={h.nombre} answered={answeredDaughter} total={48} complete={h.completado} />
+            <StatusCard title={h.nombre} answered={answeredDaughter} total={totalDaughter} complete={h.completado} />
           ) : (
             <div className="empty-state">
               <p>Tu hija todavía no ha entrado.</p>

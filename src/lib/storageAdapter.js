@@ -35,6 +35,7 @@ function createLocalStorageAdapter() {
       return out;
     },
     claimPairAccess: async () => {},
+    startFreshAnonymousSession: async () => {},
     loginAdmin: async (_email, password) => {
       if (password !== LOCAL_ADMIN_PASS) throw new Error("Contraseña incorrecta");
       setAdminSession(true);
@@ -48,6 +49,12 @@ function createLocalStorageAdapter() {
 async function ensureAnonymousSession(client) {
   const { data } = await client.auth.getSession();
   if (data.session) return;
+  const { error } = await client.auth.signInAnonymously();
+  if (error) throw error;
+}
+
+async function startFreshAnonymousSession(client) {
+  await client.auth.signOut();
   const { error } = await client.auth.signInAnonymously();
   if (error) throw error;
 }
@@ -93,6 +100,9 @@ function createSupabaseStorageAdapter(client) {
     claimPairAccess: async (codigo, rol) => {
       const map = { madre: "mother", hija: "daughter" };
       await rpc("claim_pair_access", { p_pair_code: codigo, p_role: map[rol] || rol });
+    },
+    startFreshAnonymousSession: async () => {
+      await startFreshAnonymousSession(client);
     },
     loginAdmin: async (email, password) => {
       if (!email) throw new Error("Falta el email de la facilitadora");

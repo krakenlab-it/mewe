@@ -5,13 +5,18 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY |
 
 export const backendMode = (import.meta.env.VITE_MEWE_BACKEND_MODE || "auto").toLowerCase();
 
+let supabaseClient = null;
+
 export function createSupabaseBrowserClient() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return null;
-  return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  if (supabaseClient) return supabaseClient;
+
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,
     },
   });
+  return supabaseClient;
 }
