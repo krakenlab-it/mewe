@@ -8,6 +8,14 @@ export function ComparativeReportPage({ dupla, brechas, onBack, onLogout }) {
   return (
     <Shell wide>
       <TopBar title="Mapa de la dupla" onBack={onBack} onLogout={onLogout} />
+      <section className="report-hero">
+        <div>
+          <span className="eyebrow">Comparativo</span>
+          <h2>{dupla.madre.nombre || "Madre"} + {dupla.hija.nombre || "Hija"}</h2>
+          <p>Una vista compartida para ubicar acuerdos, diferencias y conversaciones posibles.</p>
+        </div>
+        <div className="score-orb">{brechas.promedio}</div>
+      </section>
       <div className="chart">
         <RadarComparativo madre={m} hija={h} />
       </div>

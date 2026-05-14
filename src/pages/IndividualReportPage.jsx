@@ -5,9 +5,15 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
   return (
     <Shell wide>
       <TopBar title="Tu mapa Me We" onBack={onBack} onLogout={onLogout} />
-      <h2>{persona.nombre || (rol === "madre" ? "Madre" : "Hija")}</h2>
-      <p className="muted">Lo que ves no es un diagnóstico. Es una foto del momento.</p>
-      <div className="card">
+      <section className="report-hero">
+        <div>
+          <span className="eyebrow">Reporte individual</span>
+          <h2>{persona.nombre || (rol === "madre" ? "Madre" : "Hija")}</h2>
+          <p>Lo que ves no es un diagnóstico. Es una foto del momento.</p>
+        </div>
+        <div className="score-orb">{persona.indices?.conciencia_relacional ?? "—"}</div>
+      </section>
+      <div className="card quadrant">
         <h3>{cuadrante.emoji} {cuadrante.titulo}</h3>
         <p>{cuadrante.desc}</p>
       </div>

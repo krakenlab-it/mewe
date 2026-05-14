@@ -1,13 +1,18 @@
-import { RoleCard, Shell } from "../components/ui";
+import { PageHeader, RoleCard, Shell } from "../components/ui";
 
 export function RolePage({ onMother, onDaughter, onAdmin }) {
   return (
     <Shell>
-      <h2>¿Quién entra?</h2>
-      <p>Elige tu rol. Cada una tiene una vista distinta de la plataforma.</p>
-      <RoleCard title="Soy mamá" text="Crear cuenta o retomar con código." onClick={onMother} />
-      <RoleCard title="Soy hija" text="Entrar con el código de mamá." onClick={onDaughter} />
-      <RoleCard title="Soy facilitadora / admin" text="Dashboard de duplas y métricas." onClick={onAdmin} />
+      <PageHeader
+        eyebrow="Acceso"
+        title="¿Quién entra?"
+        text="Cada rol tiene una experiencia distinta, con el mismo código de dupla como hilo conductor."
+      />
+      <div className="role-grid">
+        <RoleCard badge="01" title="Soy mamá" text="Crear cuenta o retomar con código." onClick={onMother} />
+        <RoleCard badge="02" title="Soy hija" text="Entrar con el código de mamá." onClick={onDaughter} />
+        <RoleCard badge="03" title="Soy facilitadora / admin" text="Dashboard de duplas y métricas." onClick={onAdmin} />
+      </div>
     </Shell>
   );
 }

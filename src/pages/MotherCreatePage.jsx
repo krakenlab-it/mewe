@@ -1,33 +1,39 @@
-import { ConsentBox, Field, Shell } from "../components/ui";
+import { ConsentBox, Field, PageHeader, Panel, Shell } from "../components/ui";
 
 export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
   return (
     <Shell>
-      <h2>Vamos a crear tu cuenta</h2>
-      <Field label="¿Cómo quieres que te llame?">
-        <input
-          value={form.nombre || ""}
-          onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-          placeholder="Tu nombre o apodo"
-        />
-      </Field>
-      <Field label="¿Qué edad tiene tu hija?">
-        <select
-          value={form.edadHija || "11-12"}
-          onChange={(e) => setForm((f) => ({ ...f, edadHija: e.target.value }))}
-        >
-          <option value="9-10">9-10 años</option>
-          <option value="11-12">11-12 años</option>
-          <option value="13-14">13-14 años</option>
-        </select>
-      </Field>
-      <Field label="Código del taller (opcional)">
-        <input
-          value={form.taller || ""}
-          onChange={(e) => setForm((f) => ({ ...f, taller: e.target.value }))}
-          placeholder="Si te dieron uno"
-        />
-      </Field>
+      <PageHeader
+        eyebrow="Crear dupla"
+        title="Vamos a crear tu cuenta"
+        text="Solo pedimos lo necesario para sostener la experiencia del taller."
+      />
+      <Panel>
+        <Field label="¿Cómo quieres que te llame?">
+          <input
+            value={form.nombre || ""}
+            onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
+            placeholder="Tu nombre o apodo"
+          />
+        </Field>
+        <Field label="¿Qué edad tiene tu hija?">
+          <select
+            value={form.edadHija || "11-12"}
+            onChange={(e) => setForm((f) => ({ ...f, edadHija: e.target.value }))}
+          >
+            <option value="9-10">9-10 años</option>
+            <option value="11-12">11-12 años</option>
+            <option value="13-14">13-14 años</option>
+          </select>
+        </Field>
+        <Field label="Código del taller (opcional)">
+          <input
+            value={form.taller || ""}
+            onChange={(e) => setForm((f) => ({ ...f, taller: e.target.value }))}
+            placeholder="Si te dieron uno"
+          />
+        </Field>
+      </Panel>
       <ConsentBox>
         <p>Me We es una herramienta experiencial, no un servicio de salud mental ni diagnóstico clínico.</p>
         <label>
@@ -38,7 +44,6 @@ export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
           />
           He leído y acepto las condiciones de uso.
         </label>
-        <br />
         <label>
           <input
             type="checkbox"
@@ -48,8 +53,10 @@ export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
           Soy mayor de 18 años y tengo autoridad legal sobre mi hija.
         </label>
       </ConsentBox>
-      <button onClick={onSubmit}>Crear cuenta y código de dupla</button>
-      <button className="ghost" onClick={onBack}>Volver</button>
+      <div className="actions">
+        <button onClick={onSubmit}>Crear cuenta y código de dupla</button>
+        <button className="ghost" onClick={onBack}>Volver</button>
+      </div>
     </Shell>
   );
 }
