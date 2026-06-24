@@ -7,6 +7,10 @@ export const backendMode = (import.meta.env.VITE_MEWE_BACKEND_MODE || "auto").to
 
 let supabaseClient = null;
 
+export function requiresSupabaseBackend() {
+  return backendMode === "supabase" || import.meta.env.PROD;
+}
+
 export function createSupabaseBrowserClient() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return null;
   if (supabaseClient) return supabaseClient;

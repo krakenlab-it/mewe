@@ -30,6 +30,7 @@ import {
 } from "./lib/scoring";
 import { clearSession, getSavedSession, saveSession, setAdminSession } from "./lib/session";
 import { createStorageAdapter } from "./lib/storageAdapter";
+import { Shell } from "./components/ui";
 
 const QUESTION_BANK_VERSION = "v1";
 
@@ -47,6 +48,7 @@ export default function App() {
   const [comparativeBrechas, setComparativeBrechas] = useState({});
   const [comparativeMeta, setComparativeMeta] = useState(null);
   const [lastMainScreen, setLastMainScreen] = useState("cover");
+  const [bootError, setBootError] = useState(null);
 
   const testQuestions = useMemo(
     () => PREGUNTAS[session.rol === "madre" ? "madre" : "hija"] || [],
@@ -57,7 +59,15 @@ export default function App() {
     let disposed = false;
 
     async function bootstrap() {
-      const adapterPayload = await createStorageAdapter();
+      let adapterPayload;
+      try {
+        adapterPayload = await createStorageAdapter();
+      } catch (error) {
+        if (disposed) return;
+        setBootError(error.message || "No pudimos iniciar la plataforma.");
+        setScreen("boot_error");
+        return;
+      }
       if (disposed) return;
       setStorage(adapterPayload.storage);
 
@@ -327,6 +337,20 @@ export default function App() {
   }
 
   if (screen === "boot") return null;
+
+  if (screen === "boot_error") {
+    return (
+      <Shell>
+        <section className="empty-state">
+          <span className="eyebrow">Configuración</span>
+          <h2>No pudimos conectar con el backend</h2>
+          <p className="muted">{bootError}</p>
+          <p className="muted">Revisa las variables de entorno de Supabase o contacta al equipo técnico.</p>
+          <button onClick={() => window.location.reload()}>Reintentar</button>
+        </section>
+      </Shell>
+    );
+  }
 
   if (screen === "cover") return <CoverPage onEnter={() => setScreen("role")} />;
   if (screen === "role") return <RolePage onMother={() => setScreen("mother_access")} onDaughter={() => setScreen("daughter_access")} onAdmin={() => setScreen("admin_login")} />;

@@ -1,4 +1,5 @@
 import { Shell, TopBar } from "../components/ui";
+import { exportDuplasCsv } from "../lib/csvExport";
 
 export function AdminDashboardPage({ duplas, onRefresh, onOpenComparative, onDelete, onLogout }) {
   const completed = duplas.filter((d) => d.madre?.completado && d.hija?.completado).length;
@@ -20,7 +21,10 @@ export function AdminDashboardPage({ duplas, onRefresh, onOpenComparative, onDel
           <strong>{Math.max(duplas.length - completed, 0)}</strong>
         </div>
       </div>
-      <button className="secondary" onClick={onRefresh}>Actualizar dashboard</button>
+      <div className="actions">
+        <button className="secondary" onClick={onRefresh}>Actualizar dashboard</button>
+        <button className="secondary" onClick={() => exportDuplasCsv(duplas)}>Exportar datos a CSV</button>
+      </div>
       {duplas.length === 0 ? <p className="muted">No hay duplas registradas.</p> : null}
       {duplas.map((d) => {
         const both = d.madre?.completado && d.hija?.completado;

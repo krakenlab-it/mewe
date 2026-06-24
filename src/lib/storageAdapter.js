@@ -1,7 +1,16 @@
-import { createSupabaseBrowserClient, backendMode } from "./supabaseClient";
+import { createSupabaseBrowserClient, backendMode, requiresSupabaseBackend } from "./supabaseClient";
 import { hasAdminSession, setAdminSession } from "./session";
 
-const LOCAL_ADMIN_PASS = import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS || "mewe2026";
+function getLocalAdminPass() {
+  return import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS || "mewe2026";
+}
+
+export class StorageBootstrapError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "StorageBootstrapError";
+  }
+}
 
 function extractErrorMessage(error) {
   if (!error) return "Error backend";
@@ -9,6 +18,8 @@ function extractErrorMessage(error) {
 }
 
 function createLocalStorageAdapter() {
+  const localAdminPass = getLocalAdminPass();
+
   return {
     mode: "local",
     guardarDupla: async (codigo, data) => {
@@ -37,7 +48,7 @@ function createLocalStorageAdapter() {
     claimPairAccess: async () => {},
     startFreshAnonymousSession: async () => {},
     loginAdmin: async (_email, password) => {
-      if (password !== LOCAL_ADMIN_PASS) throw new Error("Contraseña incorrecta");
+      if (password !== localAdminPass) throw new Error("Contraseña incorrecta");
       setAdminSession(true);
     },
     isAdminSession: async () => hasAdminSession(),
@@ -60,8 +71,6 @@ async function startFreshAnonymousSession(client) {
 }
 
 function createSupabaseStorageAdapter(client) {
-  const localFallback = createLocalStorageAdapter();
-
   const rpc = async (fn, args = {}) => {
     const { data, error } = await client.rpc(fn, args);
     if (error) {
@@ -74,28 +83,17 @@ function createSupabaseStorageAdapter(client) {
     mode: "supabase",
     guardarDupla: async (codigo, data) => {
       await rpc("upsert_pair_snapshot", { p_pair_code: codigo, p_payload: data });
-      await localFallback.guardarDupla(codigo, data);
     },
     cargarDupla: async (codigo) => {
-      try {
-        const data = await rpc("get_pair_snapshot", { p_pair_code: codigo });
-        if (data) await localFallback.guardarDupla(codigo, data);
-        return data || null;
-      } catch (_e) {
-        return localFallback.cargarDupla(codigo);
-      }
+      const data = await rpc("get_pair_snapshot", { p_pair_code: codigo });
+      return data || null;
     },
     eliminarDupla: async (codigo) => {
       await rpc("admin_delete_pair", { p_pair_code: codigo, p_reason: "admin_ui_delete" });
-      await localFallback.eliminarDupla(codigo);
     },
     listarDuplas: async () => {
-      try {
-        const data = await rpc("list_pair_snapshots");
-        return Array.isArray(data) ? data : (data ? [data] : []);
-      } catch (_e) {
-        return localFallback.listarDuplas();
-      }
+      const data = await rpc("list_pair_snapshots");
+      return Array.isArray(data) ? data : (data ? [data] : []);
     },
     claimPairAccess: async (codigo, rol) => {
       const map = { madre: "mother", hija: "daughter" };
@@ -142,15 +140,26 @@ export async function createStorageAdapter() {
     return { storage: local, client: null };
   }
 
+  const mustUseSupabase = requiresSupabaseBackend();
   const client = createSupabaseBrowserClient();
   if (!client) {
+    if (mustUseSupabase) {
+      throw new StorageBootstrapError(
+        "Faltan VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY. Configura Supabase para continuar.",
+      );
+    }
     return { storage: local, client: null };
   }
 
   try {
     await ensureAnonymousSession(client);
     return { storage: createSupabaseStorageAdapter(client), client };
-  } catch (_e) {
+  } catch (error) {
+    if (mustUseSupabase) {
+      throw new StorageBootstrapError(
+        extractErrorMessage(error) || "No pudimos conectar con Supabase. Intenta de nuevo más tarde.",
+      );
+    }
     return { storage: local, client: null };
   }
 }
