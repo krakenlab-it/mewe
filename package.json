@@ -12,7 +12,12 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.mjs",
+    "supabase:start": "supabase start -x studio,imgproxy,inbucket,realtime,storage,edge-runtime,functions,vector,analytics",
+    "supabase:stop": "supabase stop --no-backup",
+    "supabase:env": "./scripts/export-supabase-env.sh",
+    "test:e2e:local": "npm run supabase:start && eval \"$(./scripts/export-supabase-env.sh)\" && npm run test:e2e"
   },
   "keywords": [
     "vite",
@@ -33,6 +38,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "supabase": "^2.109.1",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   },

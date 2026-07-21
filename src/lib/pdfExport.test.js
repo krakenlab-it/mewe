@@ -13,12 +13,15 @@ vi.mock("html2canvas", () => ({
 }));
 
 vi.mock("jspdf", () => ({
-  jsPDF: vi.fn(() => ({
-    addImage,
-    addPage,
-    save,
-  })),
+  jsPDF: vi.fn(function MockJsPDF() {
+    return {
+      addImage,
+      addPage,
+      save,
+    };
+  }),
 }));
+
 
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
