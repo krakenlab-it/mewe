@@ -61,7 +61,8 @@ describe("pair lifecycle against local Supabase DB", () => {
     expect(pair.deleted_at).toBeNull();
 
     const participants = await getParticipants(pair.id);
-    expect(participants.map((p) => p.role).sort()).toEqual(["daughter", "mother"]);
+    // Daughter row is created later on claim/join; mother create only inserts mother.
+    expect(participants.map((p) => p.role)).toEqual(["mother"]);
 
     const motherRow = participants.find((p) => p.role === "mother");
     expect(motherRow.display_name).toBe("Ana Madre");
