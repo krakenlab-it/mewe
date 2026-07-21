@@ -92,4 +92,12 @@ describe("schema health on local Supabase", () => {
     const { error } = await service.from("pairs").select("id").limit(1);
     expect(error).toBeNull();
   });
+
+  it("service role grants exist after migrations", async () => {
+    const out = await queryLocal(`
+      select has_table_privilege('service_role', 'public.pairs', 'select') as can_select;
+    `);
+    expect(out.toLowerCase()).toMatch(/t|true|1/);
+  });
 });
+
