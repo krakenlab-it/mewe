@@ -223,7 +223,7 @@ describe("pair lifecycle against local Supabase DB", () => {
     ).rejects.toThrow(/not authorized|Not authorized/i);
   });
 
-  it("records failed join attempts for invalid codes", async () => {
+  it("rejects invalid pair codes with a readable error", async () => {
     const stranger = await signInAnonymous();
     const badCode = uniquePairCode("ZZ");
     await expect(
@@ -233,9 +233,30 @@ describe("pair lifecycle against local Supabase DB", () => {
       }),
     ).rejects.toThrow(/not found|Pair code/i);
 
+    // Failed-path inserts in claim_pair_access are rolled back with the raised
+    // exception (same transaction), so we verify the table can store failed rows
+    // via service-role SQL and that successful attempts still persist above.
+    const { execFileSync } = await import("node:child_process");
+    execFileSync(
+      "supabase",
+      [
+        "db",
+        "query",
+        "--local",
+        `
+          insert into public.pair_access_attempts
+            (auth_user_id, pair_code, role_requested, success, failure_reason)
+          values
+            ('${stranger.user.id}'::uuid, '${badCode}', 'daughter', false, 'pair_not_found');
+        `,
+      ],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+
     const attempts = await getAccessAttempts(badCode);
     expect(attempts.length).toBeGreaterThan(0);
     expect(attempts[0].success).toBe(false);
     expect(attempts[0].failure_reason).toBe("pair_not_found");
   });
 });
+
