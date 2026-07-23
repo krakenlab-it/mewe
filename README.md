@@ -53,4 +53,25 @@ Do **not** set `VITE_MEWE_LOCAL_ADMIN_PASS` in production.
 
 - `npm run dev` — start Vite dev server
 - `npm run build` — production build to `dist/`
-- `npm test` — run Vitest
+- `npm test` — unit/UI Vitest suite
+- `npm run test:e2e` — real-data e2e against a running local Supabase
+- `npm run test:e2e:local` — start local Supabase, export creds, run e2e
+- `npm run supabase:start` / `npm run supabase:stop` — local backend lifecycle
+
+## CI / DevOps checks
+
+GitHub Actions (`.github/workflows/ci.yml`) runs:
+
+1. **Quality** — `lint`, unit tests, production `build`
+2. **Supabase local DB e2e** — `supabase/setup-cli`, `supabase start`, schema lint, then e2e tests that write/read real rows in the local Postgres (pairs, participants, responses, indices, comparative reports, access attempts, admin audit)
+
+### Local e2e (Docker required)
+
+```bash
+npm run supabase:start
+eval "$(npm run -s supabase:env)"
+npm run test:e2e
+npm run supabase:stop
+```
+
+E2e tests live in `tests/e2e/` and verify RPC flows plus direct DB state with the service role.

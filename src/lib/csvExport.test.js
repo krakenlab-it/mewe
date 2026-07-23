@@ -47,7 +47,9 @@ describe("csvExport", () => {
     expect(lines).toHaveLength(2);
     expect(lines[1]).toContain("ABC123");
     expect(lines[1]).toContain('"Ana"');
-    expect(lines[1]).toContain("si,no");
+    expect(lines[1]).toContain(',si,70,');
+    expect(lines[1]).toContain('"Luna",no,');
     expect(lines[1]).toContain("75");
   });
 });
+

@@ -1,0 +1,3 @@
+-- Local/CI seed placeholder.
+-- Question bank seeding is handled by supabase/seeds/seed-question-bank.mjs
+-- (service role) or by facilitator admin login in the app.
