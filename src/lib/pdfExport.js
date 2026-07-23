@@ -4,7 +4,7 @@ import { jsPDF } from "jspdf";
 const PAGE_WIDTH_MM = 210;
 const PAGE_HEIGHT_MM = 297;
 
-export async function downloadElementAsPdf(elementId, filename, button = null) {
+export async function downloadElementAsPdf(elementId, filename, button = null, { onError } = {}) {
   const originalText = button?.textContent;
   if (button) {
     button.textContent = "Generando...";
@@ -43,7 +43,9 @@ export async function downloadElementAsPdf(elementId, filename, button = null) {
 
     pdf.save(filename);
   } catch (error) {
-    window.alert("Hubo un problema generando el PDF.");
+    if (onError) {
+      await onError("Hubo un problema generando el PDF.");
+    }
     console.error(error);
   } finally {
     if (button) {

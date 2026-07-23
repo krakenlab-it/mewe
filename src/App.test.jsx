@@ -125,7 +125,7 @@ describe("Me We role flows", () => {
     await clickByName(/Ir al dashboard/i);
     await screen.findByText(/Hola, Ana/i);
     await completeCurrentUserTest(PREGUNTAS.madre.length);
-    expect(screen.getByText(/Reporte individual/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /Ana/i })).toBeInTheDocument();
     await exitToLanding();
 
     await clickByName(/Entrar a la plataforma/i);
@@ -138,7 +138,7 @@ describe("Me We role flows", () => {
     await clickByName(/Sigamos/i);
     await screen.findByText(/Hola, Luna/i);
     await completeCurrentUserTest(PREGUNTAS.hija.length);
-    expect(screen.getByText(/Reporte individual/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /Luna/i })).toBeInTheDocument();
     await exitToLanding();
 
     await clickByName(/Entrar a la plataforma/i);
