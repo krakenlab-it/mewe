@@ -3,7 +3,7 @@ import { RadarIndividual } from "../components/RadarChart";
 import { IndexCard, Shell, TopBar } from "../components/ui";
 import { downloadElementAsPdf } from "../lib/pdfExport";
 
-export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, onLogout }) {
+export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, onLogout, onError }) {
   const [downloading, setDownloading] = useState(false);
 
   if (!persona) {
@@ -13,7 +13,7 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
         <div className="empty-state">
           <h3>No encontramos este reporte</h3>
           <p className="muted">Vuelve al dashboard para cargar la dupla nuevamente.</p>
-          <button onClick={onBack}>Volver</button>
+          <button type="button" onClick={onBack}>Volver</button>
         </div>
       </Shell>
     );
@@ -32,6 +32,7 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
       "reporte-individual-contenido",
       `MeWe_${rol}_individual.pdf`,
       event.currentTarget,
+      { onError },
     );
     setDownloading(false);
   }
@@ -58,8 +59,10 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
         {safeCards.map((dim) => <IndexCard key={dim.key} dim={dim} />)}
       </div>
       <div className="actions">
-        <button onClick={handleDownloadPdf} disabled={downloading}>Descargar PDF</button>
-        <button onClick={onBack}>Volver</button>
+        <button type="button" onClick={handleDownloadPdf} disabled={downloading} aria-busy={downloading}>
+          {downloading ? "Generando PDF..." : "Descargar PDF"}
+        </button>
+        <button type="button" onClick={onBack}>Volver</button>
       </div>
     </Shell>
   );

@@ -30,11 +30,14 @@ import {
 } from "./lib/scoring";
 import { clearSession, getSavedSession, saveSession, setAdminSession } from "./lib/session";
 import { createStorageAdapter } from "./lib/storageAdapter";
-import { Shell } from "./components/ui";
+import { getScreenTitle } from "./lib/screenMeta";
+import { LoadingState, ScreenAnnouncer, Shell } from "./components/ui";
+import { useAccessibleDialog } from "./hooks/useAccessibleDialog";
 
 const QUESTION_BANK_VERSION = "v1";
 
 export default function App() {
+  const { alert, confirm, prompt, dialogElement } = useAccessibleDialog();
   const [screen, setScreen] = useState("boot");
   const [storage, setStorage] = useState(null);
   const [session, setSession] = useState({ rol: null, codigo: null });
@@ -54,6 +57,18 @@ export default function App() {
     () => PREGUNTAS[session.rol === "madre" ? "madre" : "hija"] || [],
     [session.rol],
   );
+
+  useEffect(() => {
+    const title = getScreenTitle(screen);
+    document.title = `ME WE — ${title}`;
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen === "boot") return undefined;
+    const main = document.getElementById("main-content");
+    main?.focus();
+    return undefined;
+  }, [screen]);
 
   useEffect(() => {
     let disposed = false;
@@ -148,8 +163,14 @@ export default function App() {
     const nombre = (form.nombre || "").trim();
     const edadHija = form.edadHija || "11-12";
     const taller = (form.taller || "").trim() || null;
-    if (!nombre) return window.alert("Necesito un nombre o apodo");
-    if (!form.acepta || !form.mayor) return window.alert("Marca las dos casillas de consentimiento.");
+    if (!nombre) {
+      await alert("Necesito un nombre o apodo");
+      return;
+    }
+    if (!form.acepta || !form.mayor) {
+      await alert("Marca las dos casillas de consentimiento.");
+      return;
+    }
 
     try {
       await storage.startFreshAnonymousSession?.();
@@ -169,14 +190,17 @@ export default function App() {
       setDupla(payload);
       setScreen("mother_code");
     } catch (e) {
-      window.alert(e.message || "No pudimos crear la dupla. Intenta de nuevo.");
+      await alert(e.message || "No pudimos crear la dupla. Intenta de nuevo.");
     }
   }
 
   async function resumeMother() {
     if (!storage) return;
     const codigo = (form.codigo || "").trim().toUpperCase();
-    if (codigo.length !== 6) return window.alert("El código tiene 6 caracteres");
+    if (codigo.length !== 6) {
+      await alert("El código tiene 6 caracteres");
+      return;
+    }
     try {
       await storage.claimPairAccess(codigo, "madre");
       const pair = await storage.cargarDupla(codigo);
@@ -186,14 +210,17 @@ export default function App() {
       setDupla(pair);
       setScreen("dashboard_mother");
     } catch (e) {
-      window.alert(e.message || "No encontramos ese código");
+      await alert(e.message || "No encontramos ese código");
     }
   }
 
   async function daughterEnter() {
     if (!storage) return;
     const codigo = (form.codigo || "").trim().toUpperCase();
-    if (codigo.length !== 6) return window.alert("El código tiene 6 caracteres");
+    if (codigo.length !== 6) {
+      await alert("El código tiene 6 caracteres");
+      return;
+    }
     try {
       await storage.claimPairAccess(codigo, "hija");
       const pair = await storage.cargarDupla(codigo);
@@ -203,15 +230,21 @@ export default function App() {
       setDupla(pair);
       setScreen(pair.hija?.nombre ? "dashboard_daughter" : "daughter_profile");
     } catch (e) {
-      window.alert(e.message || "No encontramos ese código");
+      await alert(e.message || "No encontramos ese código");
     }
   }
 
   async function completeDaughterProfile() {
     if (!storage || !dupla) return;
     const nombre = (form.hijaNombre || "").trim();
-    if (!nombre) return window.alert("Pon tu nombre o apodo");
-    if (!form.hijaAcepta) return window.alert("Marca la casilla para continuar.");
+    if (!nombre) {
+      await alert("Pon tu nombre o apodo");
+      return;
+    }
+    if (!form.hijaAcepta) {
+      await alert("Marca la casilla para continuar.");
+      return;
+    }
     const next = structuredClone(dupla);
     next.hija.nombre = nombre;
     next.hija.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
@@ -267,14 +300,18 @@ export default function App() {
     if (!dupla) return;
     const role = session.rol === "madre" ? "madre" : "hija";
     const persona = dupla[role];
-    if (!persona?.indices) return window.alert("Falta calcular el reporte");
+    if (!persona?.indices) {
+      await alert("Falta calcular el reporte");
+      return;
+    }
     buildIndividualReport(role, persona);
     setScreen("report_individual");
   }
 
-  function viewComparativeReport() {
+  async function viewComparativeReport() {
     if (!dupla?.madre?.completado || !dupla?.hija?.completado) {
-      return window.alert("Ambas deben terminar primero");
+      await alert("Ambas deben terminar primero");
+      return;
     }
     buildComparativeReport(dupla);
     setScreen("report_comparative");
@@ -302,7 +339,7 @@ export default function App() {
       setDuplasAdmin(all);
       setScreen("admin_dashboard");
     } catch (e) {
-      window.alert(e.message || "No fue posible iniciar sesión admin.");
+      await alert(e.message || "No fue posible iniciar sesión admin.");
     }
   }
 
@@ -314,8 +351,17 @@ export default function App() {
 
   async function deletePair(codigo) {
     if (!storage) return;
-    if (!window.confirm(`¿Borrar permanentemente la dupla ${codigo}?`)) return;
-    const token = window.prompt("Para confirmar, escribe BORRAR en mayúsculas:");
+    const confirmed = await confirm(`¿Borrar permanentemente la dupla ${codigo}?`, {
+      title: "Borrar dupla",
+      confirmLabel: "Continuar",
+      danger: true,
+    });
+    if (!confirmed) return;
+    const token = await prompt("Para confirmar, escribe BORRAR en mayúsculas:", {
+      title: "Confirmación final",
+      inputLabel: "Escribe BORRAR",
+      confirmLabel: "Borrar dupla",
+    });
     if (token !== "BORRAR") return;
     await storage.eliminarDupla(codigo);
     await refreshAdmin();
@@ -336,8 +382,18 @@ export default function App() {
     setScreen(target);
   }
 
-  if (screen === "boot") return null;
+  if (screen === "boot") {
+    return (
+      <>
+        <LoadingState />
+        {dialogElement}
+      </>
+    );
+  }
 
+  const screenAnnouncement = `Navegación: ${getScreenTitle(screen)}`;
+
+  const content = (() => {
   if (screen === "boot_error") {
     return (
       <Shell>
@@ -346,7 +402,7 @@ export default function App() {
           <h2>No pudimos conectar con el backend</h2>
           <p className="muted">{bootError}</p>
           <p className="muted">Revisa las variables de entorno de Supabase o contacta al equipo técnico.</p>
-          <button onClick={() => window.location.reload()}>Reintentar</button>
+          <button type="button" onClick={() => window.location.reload()}>Reintentar</button>
         </section>
       </Shell>
     );
@@ -363,12 +419,21 @@ export default function App() {
   if (screen === "dashboard_mother") return <DashboardMotherPage dupla={dupla} onLogout={logout} onStartTest={startTest} onViewReport={viewIndividualReport} onViewComparative={viewComparativeReport} onGoCrisis={() => openInfoPage("crisis")} onGoPolicy={() => openInfoPage("policy")} />;
   if (screen === "dashboard_daughter") return <DashboardDaughterPage dupla={dupla} onLogout={logout} onStartTest={startTest} onViewReport={viewIndividualReport} onGoCrisis={() => openInfoPage("crisis")} onGoPolicy={() => openInfoPage("policy")} />;
   if (screen === "test") return <TestPage rol={session.rol} pregunta={testQuestions[testIndex]} index={testIndex} total={testQuestions.length} onAnswer={answerQuestion} onPause={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} onBack={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} />;
-  if (screen === "report_individual") return <IndividualReportPage persona={dupla?.[reportRole]} rol={reportRole} cards={reportCards} cuadrante={reportCuadrante} onBack={() => setScreen(reportRole === "madre" ? "dashboard_mother" : "dashboard_daughter")} onLogout={logout} />;
-  if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} meta={comparativeMeta} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} />;
+  if (screen === "report_individual") return <IndividualReportPage persona={dupla?.[reportRole]} rol={reportRole} cards={reportCards} cuadrante={reportCuadrante} onBack={() => setScreen(reportRole === "madre" ? "dashboard_mother" : "dashboard_daughter")} onLogout={logout} onError={alert} />;
+  if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} meta={comparativeMeta} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} onError={alert} />;
   if (screen === "admin_login") return <AdminLoginPage form={form} setForm={setForm} onSubmit={loginAdmin} onBack={() => setScreen("role")} />;
   if (screen === "admin_dashboard") return <AdminDashboardPage duplas={duplasAdmin} onRefresh={refreshAdmin} onOpenComparative={openComparativeFromAdmin} onDelete={deletePair} onLogout={logout} />;
   if (screen === "crisis") return <CrisisPage onBack={() => setScreen(lastMainScreen)} />;
   if (screen === "policy") return <LegalPage onBack={() => setScreen(lastMainScreen)} />;
 
   return <CoverPage onEnter={() => setScreen("role")} />;
+  })();
+
+  return (
+    <>
+      <ScreenAnnouncer message={screenAnnouncement} />
+      {content}
+      {dialogElement}
+    </>
+  );
 }

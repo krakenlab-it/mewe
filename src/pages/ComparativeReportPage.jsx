@@ -4,7 +4,7 @@ import { BrandMark, Shell, TopBar } from "../components/ui";
 import { INDICES_NOMBRES } from "../data/questions";
 import { downloadElementAsPdf } from "../lib/pdfExport";
 
-export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout }) {
+export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout, onError }) {
   const [downloading, setDownloading] = useState(false);
   const m = dupla.madre.indices || {};
   const h = dupla.hija.indices || {};
@@ -21,6 +21,7 @@ export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout }
       "reporte-comparativo-contenido",
       "MeWe_dupla_comparativo.pdf",
       event.currentTarget,
+      { onError },
     );
     setDownloading(false);
   }
@@ -69,15 +70,19 @@ export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout }
         <section className="report-section">
           <h3>Brechas de percepción</h3>
           <p>Brecha promedio: <strong>{brechas.promedio} puntos</strong>. {meta?.brechaTexto}</p>
-          <div className="brecha-list">
+          <div className="brecha-list" role="list" aria-label="Brechas de percepción por dimensión">
             {dimsOrdenadas.map((k) => (
-              <div className="brecha-row" key={k}>
+              <div className="brecha-row" key={k} role="listitem">
                 <div className="brecha-label">{INDICES_NOMBRES[k]}</div>
-                <div className="brecha-bar-container">
+                <div
+                  className="brecha-bar-container"
+                  role="img"
+                  aria-label={`${INDICES_NOMBRES[k]}: madre ${m[k] || 0} puntos, hija ${h[k] || 0} puntos, brecha ${brechas[k] || 0}`}
+                >
                   <div className="brecha-bar-madre" style={{ width: `${m[k] || 0}%` }} />
                   <div className="brecha-bar-hija" style={{ width: `${h[k] || 0}%` }} />
                 </div>
-                <div className="brecha-value">±{brechas[k] || 0}</div>
+                <div className="brecha-value" aria-label={`Brecha ${brechas[k] || 0} puntos`}>±{brechas[k] || 0}</div>
               </div>
             ))}
           </div>
@@ -91,8 +96,10 @@ export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout }
       </div>
 
       <div className="actions">
-        <button onClick={handleDownloadPdf} disabled={downloading}>Descargar PDF</button>
-        <button onClick={onBack}>Volver al dashboard</button>
+        <button type="button" onClick={handleDownloadPdf} disabled={downloading} aria-busy={downloading}>
+          {downloading ? "Generando PDF..." : "Descargar PDF"}
+        </button>
+        <button type="button" onClick={onBack}>Volver al dashboard</button>
       </div>
     </Shell>
   );
