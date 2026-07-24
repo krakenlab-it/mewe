@@ -49,6 +49,12 @@ Do **not** set `VITE_MEWE_LOCAL_ADMIN_PASS` in production.
 
 6. Deploy and run the parity checklist in [`docs/backend/parity-checklist.md`](docs/backend/parity-checklist.md).
 
+## Progress & sprints
+
+- [Weekly summary (20–24 Jul 2026)](docs/progress/week-2026-07-21.md) — what shipped this week
+- [Changelog](docs/progress/CHANGELOG.md) — full release history
+- [Sprint tracking](docs/sprints/README.md) — current and past sprint goals
+
 ## Scripts
 
 - `npm run dev` — start Vite dev server
