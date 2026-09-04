@@ -16,17 +16,20 @@ export function ScreenAnnouncer({ message }) {
   );
 }
 
-export function Shell({ children, wide = false }) {
+export function Shell({ children, wide = false, variant = "default" }) {
+  const containerClass = [
+    "container",
+    wide ? "wide" : "",
+    variant === "landing" ? "container--landing" : "",
+    variant === "access" ? "container--access" : "",
+  ].filter(Boolean).join(" ");
+
   return (
-    <div className="app-frame">
+    <div className={`app-frame app-frame--${variant}`}>
       <SkipLink />
-      <main
-        id="main-content"
-        className={wide ? "container wide" : "container"}
-        tabIndex={-1}
-      >
+      <main id="main-content" className={containerClass} tabIndex={-1}>
         {children}
-        <footer>
+        <footer className="site-footer">
           Me We v1.0 · Herramienta experiencial · No es diagnóstico clínico ni canal de emergencia
         </footer>
       </main>
@@ -37,14 +40,16 @@ export function Shell({ children, wide = false }) {
 export function TopBar({ title, subtitle, onBack, onLogout }) {
   return (
     <header className="top">
-      <div>
+      <div className="top__brand">
         <BrandMark compact />
-        <h1>{title}</h1>
-        {subtitle ? <p className="muted">{subtitle}</p> : null}
+        <div className="top__titles">
+          <h1>{title}</h1>
+          {subtitle ? <p className="muted">{subtitle}</p> : null}
+        </div>
       </div>
       <div className="top-actions">
-        {onBack ? <button type="button" className="ghost small" onClick={onBack}>Volver</button> : null}
-        {onLogout ? <button type="button" className="ghost small" onClick={onLogout}>Salir</button> : null}
+        {onBack ? <button type="button" className="btn-ghost btn-small" onClick={onBack}>Volver</button> : null}
+        {onLogout ? <button type="button" className="btn-ghost btn-small" onClick={onLogout}>Salir</button> : null}
       </div>
     </header>
   );
@@ -52,10 +57,12 @@ export function TopBar({ title, subtitle, onBack, onLogout }) {
 
 export function BrandMark({ compact = false }) {
   return (
-    <div className={compact ? "brand compact" : "brand"} role="img" aria-label="Me We">
-      <span className="brand-me" aria-hidden="true">ME</span>
-      <span className="brand-divider" aria-hidden="true" />
-      <span className="brand-we" aria-hidden="true">WE</span>
+    <div className={compact ? "brand brand--compact" : "brand"} role="img" aria-label="Me We">
+      <span className="brand-lockup">
+        <span className="brand-me" aria-hidden="true">ME</span>
+        <span className="brand-slash" aria-hidden="true">/</span>
+        <span className="brand-we" aria-hidden="true">WE</span>
+      </span>
     </div>
   );
 }
@@ -107,11 +114,11 @@ export function StatusCard({ title, answered, total, complete, onAction, actionT
     : `${title}: ${answered} de ${total} preguntas respondidas (${progress}%)`;
 
   return (
-    <div className="row">
-      <div>
+    <div className="status-card">
+      <div className="status-card__main">
         <div className="row-heading">
-          <strong>{title}</strong>
-          <span className={complete ? "pill done" : "pill"}>{complete ? "Completado" : "En progreso"}</span>
+          <strong className="status-card__title">{title}</strong>
+          <span className={complete ? "pill pill--done" : "pill"}>{complete ? "Completado" : "En progreso"}</span>
         </div>
         <p className="muted">{complete ? "Listo para revisar." : `${answered}/${total} preguntas respondidas`}</p>
         <div
@@ -126,7 +133,9 @@ export function StatusCard({ title, answered, total, complete, onAction, actionT
         </div>
         {children}
       </div>
-      {onAction ? <button type="button" className="small" onClick={onAction}>{actionText}</button> : null}
+      {onAction ? (
+        <button type="button" className="btn-primary btn-small" onClick={onAction}>{actionText}</button>
+      ) : null}
     </div>
   );
 }
@@ -140,7 +149,7 @@ const ZONE_LABELS = {
 export function IndexCard({ dim }) {
   const zoneText = ZONE_LABELS[dim.zona] || dim.zona;
   return (
-    <article className={`index ${dim.zona}`} aria-label={`${INDICES_NOMBRES[dim.key]}: ${dim.score ?? "sin puntuación"}, ${zoneText}`}>
+    <article className={`index index--${dim.zona}`} aria-label={`${INDICES_NOMBRES[dim.key]}: ${dim.score ?? "sin puntuación"}, ${zoneText}`}>
       <h3>{INDICES_NOMBRES[dim.key]} <span>{dim.score ?? "—"}</span></h3>
       <span className="zone-label">{zoneText}</span>
       <p>{dim.texto}</p>
