@@ -4,8 +4,7 @@ import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { ComparativeReportPage } from "./pages/ComparativeReportPage";
 import { CoverPage } from "./pages/CoverPage";
 import { CrisisPage } from "./pages/CrisisPage";
-import { DashboardDaughterPage } from "./pages/DashboardDaughterPage";
-import { DashboardMotherPage } from "./pages/DashboardMotherPage";
+import { InteractiveDashboardPage } from "./pages/interactive/InteractiveDashboardPage";
 import { DaughterAccessPage } from "./pages/DaughterAccessPage";
 import { DaughterProfilePage } from "./pages/DaughterProfilePage";
 import { IndividualReportPage } from "./pages/IndividualReportPage";
@@ -52,6 +51,7 @@ export default function App() {
   const [comparativeMeta, setComparativeMeta] = useState(null);
   const [lastMainScreen, setLastMainScreen] = useState("cover");
   const [bootError, setBootError] = useState(null);
+  const [dashboardSection, setDashboardSection] = useState("inicio");
 
   const testQuestions = useMemo(
     () => PREGUNTAS[session.rol === "madre" ? "madre" : "hija"] || [],
@@ -377,6 +377,36 @@ export default function App() {
     setScreen("report_comparative");
   }
 
+  async function persistDupla(nextDupla = dupla) {
+    if (!storage || !session.codigo || !nextDupla) return;
+    const clone = structuredClone(nextDupla);
+    await storage.guardarDupla(session.codigo, clone);
+    setDupla(clone);
+  }
+
+  async function notifyUser(message) {
+    await alert(message);
+  }
+
+  function renderInteractiveDashboard(rol) {
+    return (
+      <InteractiveDashboardPage
+        dupla={dupla}
+        rol={rol}
+        section={dashboardSection}
+        onSectionChange={setDashboardSection}
+        onSave={(next) => persistDupla(next)}
+        onLogout={logout}
+        onStartTest={startTest}
+        onViewReport={viewIndividualReport}
+        onViewComparative={rol === "madre" ? viewComparativeReport : undefined}
+        onGoCrisis={() => openInfoPage("crisis")}
+        onGoPolicy={() => openInfoPage("policy")}
+        onNotify={notifyUser}
+      />
+    );
+  }
+
   function openInfoPage(target) {
     setLastMainScreen(screen);
     setScreen(target);
@@ -416,8 +446,8 @@ export default function App() {
   if (screen === "mother_code") return <MotherCodePage codigo={dupla?.codigo} onContinue={() => setScreen("dashboard_mother")} />;
   if (screen === "daughter_access") return <DaughterAccessPage code={form.codigo || ""} setCode={(value) => setForm((f) => ({ ...f, codigo: value }))} onSubmit={daughterEnter} onBack={() => setScreen("role")} />;
   if (screen === "daughter_profile") return <DaughterProfilePage form={form} setForm={setForm} onSubmit={completeDaughterProfile} />;
-  if (screen === "dashboard_mother") return <DashboardMotherPage dupla={dupla} onLogout={logout} onStartTest={startTest} onViewReport={viewIndividualReport} onViewComparative={viewComparativeReport} onGoCrisis={() => openInfoPage("crisis")} onGoPolicy={() => openInfoPage("policy")} />;
-  if (screen === "dashboard_daughter") return <DashboardDaughterPage dupla={dupla} onLogout={logout} onStartTest={startTest} onViewReport={viewIndividualReport} onGoCrisis={() => openInfoPage("crisis")} onGoPolicy={() => openInfoPage("policy")} />;
+  if (screen === "dashboard_mother") return renderInteractiveDashboard("madre");
+  if (screen === "dashboard_daughter") return renderInteractiveDashboard("hija");
   if (screen === "test") return <TestPage rol={session.rol} pregunta={testQuestions[testIndex]} index={testIndex} total={testQuestions.length} onAnswer={answerQuestion} onPause={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} onBack={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} />;
   if (screen === "report_individual") return <IndividualReportPage persona={dupla?.[reportRole]} rol={reportRole} cards={reportCards} cuadrante={reportCuadrante} onBack={() => setScreen(reportRole === "madre" ? "dashboard_mother" : "dashboard_daughter")} onLogout={logout} onError={alert} />;
   if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} meta={comparativeMeta} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} onError={alert} />;

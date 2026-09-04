@@ -102,7 +102,7 @@ async function completeCurrentUserTest(total) {
 }
 
 async function exitToLanding() {
-  await clickByName(/Salir/i);
+  await clickByName(/Cerrar Sesión|Salir/i);
   await screen.findByText(/Una lectura clara del vínculo madre-hija/i);
 }
 
@@ -146,7 +146,7 @@ describe("Me We role flows", () => {
     await clickByName(/Ya tengo un código/i);
     await userEvent.type(screen.getByLabelText(/Código de dupla/i), codigo);
     await clickByName(/^Entrar$/i);
-    await screen.findByText(/Comparativo madre-hija/i);
+    await screen.findByRole("button", { name: /Ver mapa comparativo/i });
     await clickByName(/Ver mapa comparativo/i);
     await screen.findByText(/Cómo ve cada una el vínculo/i);
     await screen.findByText(/Brechas de percepción/i);

@@ -1,4 +1,5 @@
 import { COPY_INDICES, INDICES_INVERTIDOS, INDICES_NOMBRES, PREGUNTAS } from "../data/questions";
+import { createEmptyInteractivo } from "./interactive/state";
 
 export function calcularIndices(rol, respuestas) {
   const preguntas = PREGUNTAS[rol] || [];
@@ -130,6 +131,7 @@ export function nuevaDuplaVacia() {
       fechaCompletado: null,
       consentimiento: null,
     },
+    interactivo: createEmptyInteractivo(),
   };
 }
 
