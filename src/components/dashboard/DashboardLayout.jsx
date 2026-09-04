@@ -13,6 +13,7 @@ export function DashboardLayout({
   onStartTest,
   onViewReport,
   onViewComparative,
+  onBack,
   testProgress,
   children,
 }) {
@@ -37,6 +38,7 @@ export function DashboardLayout({
             onStartTest={onStartTest}
             onViewReport={onViewReport}
             onViewComparative={onViewComparative}
+            onBack={onBack}
           />
           <main
             id="main-content"

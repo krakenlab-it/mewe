@@ -24,11 +24,11 @@ const ROLES = [
   },
 ];
 
-export function RolePage({ onMother, onDaughter, onAdmin }) {
+export function RolePage({ onMother, onDaughter, onAdmin, onBack }) {
   const handlers = { onMother, onDaughter, onAdmin };
 
   return (
-    <Shell variant="access">
+    <Shell variant="access" onBack={onBack}>
       <div className="access-layout">
         <header className="access-header">
           <BrandMark compact />

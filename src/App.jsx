@@ -56,6 +56,7 @@ export default function App() {
   const [comparativeBrechas, setComparativeBrechas] = useState({});
   const [comparativeMeta, setComparativeMeta] = useState(null);
   const [lastMainScreen, setLastMainScreen] = useState("cover");
+  const [dashboardBackScreen, setDashboardBackScreen] = useState("role");
   const [bootError, setBootError] = useState(null);
   const [dashboardSection, setDashboardSection] = useState("inicio");
 
@@ -120,6 +121,7 @@ export default function App() {
         }
         setSession(saved);
         setDupla(pair);
+        setDashboardBackScreen(saved.rol === "madre" ? "mother_login" : "daughter_access");
         setScreen(saved.rol === "madre" ? "dashboard_mother" : "dashboard_daughter");
       } catch (_e) {
         clearSession();
@@ -214,6 +216,7 @@ export default function App() {
       saveSession("madre", codigo);
       setSession({ rol: "madre", codigo });
       setDupla(pair);
+      setDashboardBackScreen("mother_login");
       goToUserHome("madre", { fromLogin: true });
     } catch (e) {
       await alert(e.message || "No encontramos ese código");
@@ -234,6 +237,7 @@ export default function App() {
       saveSession("hija", codigo);
       setSession({ rol: "hija", codigo });
       setDupla(pair);
+      setDashboardBackScreen("daughter_access");
       if (pair.hija?.nombre) {
         goToUserHome("hija", { fromLogin: true });
       } else {
@@ -260,6 +264,7 @@ export default function App() {
     next.hija.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
     await storage.guardarDupla(session.codigo, next);
     setDupla(next);
+    setDashboardBackScreen("daughter_profile");
     goToUserHome("hija", { fromLogin: true });
   }
 
@@ -298,6 +303,7 @@ export default function App() {
         total={total}
         onStartTest={startTest}
         onGoToDashboard={() => dismissOnboardingAndGoToDashboard(rol)}
+        onBack={() => setScreen(dashboardBackScreen)}
       />
     );
   }
@@ -452,6 +458,7 @@ export default function App() {
         onGoCrisis={() => openInfoPage("crisis")}
         onGoPolicy={() => openInfoPage("policy")}
         onNotify={notifyUser}
+        onBack={() => setScreen(dashboardBackScreen)}
       />
     );
   }
@@ -475,7 +482,7 @@ export default function App() {
   const content = (() => {
   if (screen === "boot_error") {
     return (
-      <Shell>
+      <Shell onBack={() => setScreen("cover")}>
         <section className="empty-state">
           <span className="eyebrow">Configuración</span>
           <h2>No pudimos conectar con el backend</h2>
@@ -488,13 +495,13 @@ export default function App() {
   }
 
   if (screen === "cover") return <CoverPage onEnter={() => setScreen("role")} />;
-  if (screen === "role") return <RolePage onMother={() => setScreen("mother_access")} onDaughter={() => setScreen("daughter_access")} onAdmin={() => setScreen("admin_login")} />;
+  if (screen === "role") return <RolePage onMother={() => setScreen("mother_access")} onDaughter={() => setScreen("daughter_access")} onAdmin={() => setScreen("admin_login")} onBack={() => setScreen("cover")} />;
   if (screen === "mother_access") return <MotherAccessPage onCreate={() => setScreen("mother_create")} onResume={() => setScreen("mother_login")} onBack={() => setScreen("role")} />;
   if (screen === "mother_create") return <MotherCreatePage form={form} setForm={setForm} onSubmit={createMother} onBack={() => setScreen("mother_access")} />;
   if (screen === "mother_login") return <MotherLoginPage code={form.codigo || ""} setCode={(value) => setForm((f) => ({ ...f, codigo: value }))} onSubmit={resumeMother} onBack={() => setScreen("mother_access")} />;
-  if (screen === "mother_code") return <MotherCodePage codigo={dupla?.codigo} onContinue={() => goToUserHome("madre", { fromLogin: true })} />;
+  if (screen === "mother_code") return <MotherCodePage codigo={dupla?.codigo} onContinue={() => { setDashboardBackScreen("mother_code"); goToUserHome("madre", { fromLogin: true }); }} onBack={() => setScreen("mother_access")} />;
   if (screen === "daughter_access") return <DaughterAccessPage code={form.codigo || ""} setCode={(value) => setForm((f) => ({ ...f, codigo: value }))} onSubmit={daughterEnter} onBack={() => setScreen("role")} />;
-  if (screen === "daughter_profile") return <DaughterProfilePage form={form} setForm={setForm} onSubmit={completeDaughterProfile} />;
+  if (screen === "daughter_profile") return <DaughterProfilePage form={form} setForm={setForm} onSubmit={completeDaughterProfile} onBack={() => setScreen("daughter_access")} />;
   if (screen === "onboarding_mother") return renderTestOnboarding("madre");
   if (screen === "onboarding_daughter") return renderTestOnboarding("hija");
   if (screen === "dashboard_mother") return renderInteractiveDashboard("madre");
@@ -503,7 +510,7 @@ export default function App() {
   if (screen === "report_individual") return <IndividualReportPage persona={dupla?.[reportRole]} rol={reportRole} cards={reportCards} cuadrante={reportCuadrante} onBack={() => setScreen(reportRole === "madre" ? "dashboard_mother" : "dashboard_daughter")} onLogout={logout} onError={alert} />;
   if (screen === "report_comparative") return <ComparativeReportPage dupla={dupla} brechas={comparativeBrechas} meta={comparativeMeta} onBack={() => setScreen(lastMainScreen.includes("admin") ? "admin_dashboard" : "dashboard_mother")} onLogout={logout} onError={alert} />;
   if (screen === "admin_login") return <AdminLoginPage form={form} setForm={setForm} onSubmit={loginAdmin} onBack={() => setScreen("role")} />;
-  if (screen === "admin_dashboard") return <AdminDashboardPage duplas={duplasAdmin} onRefresh={refreshAdmin} onOpenComparative={openComparativeFromAdmin} onDelete={deletePair} onLogout={logout} />;
+  if (screen === "admin_dashboard") return <AdminDashboardPage duplas={duplasAdmin} onBack={() => setScreen("role")} onRefresh={refreshAdmin} onOpenComparative={openComparativeFromAdmin} onDelete={deletePair} onLogout={logout} />;
   if (screen === "crisis") return <CrisisPage onBack={() => setScreen(lastMainScreen)} />;
   if (screen === "policy") return <LegalPage onBack={() => setScreen(lastMainScreen)} />;
 

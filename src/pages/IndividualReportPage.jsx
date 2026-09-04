@@ -62,7 +62,6 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
         <button type="button" onClick={handleDownloadPdf} disabled={downloading} aria-busy={downloading}>
           {downloading ? "Generando PDF..." : "Descargar PDF"}
         </button>
-        <button type="button" onClick={onBack}>Volver</button>
       </div>
     </Shell>
   );
