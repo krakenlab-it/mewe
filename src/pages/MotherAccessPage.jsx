@@ -2,7 +2,7 @@ import { PageHeader, Panel, Shell } from "../components/ui";
 
 export function MotherAccessPage({ onCreate, onResume, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <PageHeader
         eyebrow="Madre"
         title="Hola, mamá"
@@ -12,7 +12,6 @@ export function MotherAccessPage({ onCreate, onResume, onBack }) {
         <div className="actions stacked">
           <button onClick={onCreate}>Es mi primera vez · crear cuenta</button>
           <button className="secondary" onClick={onResume}>Ya tengo un código · retomar</button>
-          <button className="ghost" onClick={onBack}>Volver</button>
         </div>
       </Panel>
     </Shell>

@@ -3,6 +3,7 @@ import { PREGUNTAS } from "../data/questions";
 
 export function DashboardMotherPage({
   dupla,
+  onBack,
   onLogout,
   onStartTest,
   onViewReport,
@@ -19,7 +20,7 @@ export function DashboardMotherPage({
 
   return (
     <Shell>
-      <TopBar title={`Hola, ${m.nombre || ""} 🌿`} subtitle={`Tu código de dupla: ${dupla.codigo}`} onLogout={onLogout} />
+      <TopBar title={`Hola, ${m.nombre || ""} 🌿`} subtitle={`Tu código de dupla: ${dupla.codigo}`} onBack={onBack} onLogout={onLogout} />
       <div className="dashboard-grid">
         <Panel>
           <span className="eyebrow">Tu test</span>
