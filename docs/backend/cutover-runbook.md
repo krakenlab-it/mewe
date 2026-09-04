@@ -38,7 +38,9 @@ Phased strategy aligned with DB-first migration:
 
 ## 5) Parity Test Matrix
 
-Run end-to-end before go-live:
+Automated coverage (Sprint 03): GitHub Actions runs `tests/e2e/` on every merge — pair lifecycle, admin flows, schema health. See [Sprint 03 automated vs manual matrix](../sprints/sprint-03-quality-a11y.md#automated-vs-manual-coverage).
+
+Run the full manual matrix in staging before go-live:
 
 - Mother:
   - create pair, pause/continue, complete test, view report.
