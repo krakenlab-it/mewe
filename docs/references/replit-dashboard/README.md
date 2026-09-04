@@ -2,7 +2,7 @@
 
 Screenshots from the Replit **Juntas Fuertes / Me We** app used as parity reference for the production dashboard port.
 
-**Notion:** [KLM-63](https://www.notion.so/) (interactive dashboard port)
+**Notion ticket:** KLM-63
 
 **Drive folder (source assets):** [Google Drive — Replit screenshots](https://drive.google.com/drive/folders/1b8Mc2dq8fVkdJOV6PZyVs32rl9plZ-IC)
 
