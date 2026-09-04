@@ -14,6 +14,7 @@ import { PiecesSection, AchievementsSection } from "../../components/dashboard/s
 import { AssistantSection, AssistantWidget } from "../../components/dashboard/sections/AssistantSection";
 import { SettingsSection, ConnectionSection } from "../../components/dashboard/sections/SettingsSection";
 import { StatusCard } from "../../components/ui";
+import { TestCtaBanner } from "../../components/TestCtaBanner";
 import { PREGUNTAS } from "../../data/questions";
 
 export function InteractiveDashboardPage({
@@ -96,6 +97,13 @@ export function InteractiveDashboardPage({
       case DASHBOARD_SECTIONS.INICIO:
         return (
           <div className="inicio-grid">
+            <TestCtaBanner
+              answered={answered}
+              total={total}
+              complete={persona.completado}
+              onStartTest={onStartTest}
+              onViewReport={onViewReport}
+            />
             <MoodCard dupla={dupla} rol={rol} onRecordMood={handleRecordMood} onGoMood={() => navigate(DASHBOARD_SECTIONS.ANIMO)} />
             <ConnectionCard dupla={dupla} rol={rol} codigo={dupla.codigo} />
             <ProgressCard dupla={dupla} />
@@ -107,7 +115,7 @@ export function InteractiveDashboardPage({
                 total={total}
                 complete={persona.completado}
                 onAction={persona.completado ? onViewReport : onStartTest}
-                actionText={persona.completado ? "Ver reporte" : answered > 0 ? "Continuar" : "Empezar"}
+                actionText={persona.completado ? "Ver mi reporte" : answered > 0 ? "Continuar" : "Empezar"}
               />
               {rol === "madre" && dupla.hija?.nombre ? (
                 <StatusCard
@@ -187,6 +195,11 @@ export function InteractiveDashboardPage({
         onStartTest={onStartTest}
         onViewReport={onViewReport}
         onViewComparative={rol === "madre" ? onViewComparative : undefined}
+        testProgress={{
+          answered,
+          total,
+          complete: persona.completado,
+        }}
       >
         {renderSection()}
       </DashboardLayout>

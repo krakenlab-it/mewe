@@ -1,6 +1,16 @@
 import { NAV_ITEMS } from "../../lib/interactive/constants";
+import { TestCtaBanner } from "../TestCtaBanner";
 
-export function DashboardSidebar({ section, onNavigate, rol }) {
+export function DashboardSidebar({
+  section,
+  onNavigate,
+  rol,
+  testProgress,
+  onStartTest,
+  onViewReport,
+}) {
+  const showTestCta = testProgress && !testProgress.complete;
+
   return (
     <nav className="dashboard-sidebar" aria-label="Panel principal">
       <div className="sidebar-brand" role="img" aria-label="Me We">
@@ -26,6 +36,16 @@ export function DashboardSidebar({ section, onNavigate, rol }) {
           </li>
         ))}
       </ul>
+      {showTestCta ? (
+        <TestCtaBanner
+          variant="sidebar"
+          answered={testProgress.answered}
+          total={testProgress.total}
+          complete={testProgress.complete}
+          onStartTest={onStartTest}
+          onViewReport={onViewReport}
+        />
+      ) : null}
     </nav>
   );
 }

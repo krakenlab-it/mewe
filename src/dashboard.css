@@ -206,3 +206,78 @@
 @media (prefers-reduced-motion: reduce) {
   .progress-track-fill, .switch-slider, .switch-slider::before { transition: none; }
 }
+
+/* Prominent test CTA — onboarding follow-up on dashboard */
+.test-cta-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 24px 28px;
+  border-radius: 20px;
+  border: 2px solid rgba(155, 127, 212, 0.45);
+  background: linear-gradient(135deg, rgba(155, 127, 212, 0.18), rgba(232, 139, 139, 0.12), rgba(245, 215, 110, 0.1));
+  box-shadow: 0 8px 32px rgba(107, 79, 160, 0.12);
+}
+
+.test-cta-banner--complete {
+  border-color: rgba(91, 181, 168, 0.45);
+  background: linear-gradient(135deg, rgba(91, 181, 168, 0.15), rgba(155, 127, 212, 0.1));
+}
+
+.test-cta-banner-content { flex: 1; min-width: 220px; }
+.test-cta-banner h2 { margin: 4px 0 8px; font-size: clamp(1.2rem, 3vw, 1.5rem); }
+.test-cta-banner-desc { margin: 0 0 12px; color: var(--muted); line-height: 1.45; }
+.test-cta-banner-meta { margin: 8px 0 0; font-weight: 700; font-size: 0.95rem; }
+
+.test-cta-banner-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.test-cta-banner-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9B7FD4, #E88B8B);
+  transition: width 0.3s ease;
+}
+
+.test-cta-banner-action {
+  flex-shrink: 0;
+  font-size: 1rem;
+  padding: 14px 28px;
+  min-width: 180px;
+}
+
+.test-cta-sidebar {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(155, 127, 212, 0.15), rgba(232, 139, 139, 0.1));
+  border: 1px solid rgba(155, 127, 212, 0.3);
+}
+
+.test-cta-sidebar-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6B4FA0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.test-cta-sidebar-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 10px 12px;
+  box-shadow: none;
+}
+
+@media (max-width: 899px) {
+  .test-cta-banner { flex-direction: column; align-items: stretch; padding: 20px; }
+  .test-cta-banner-action { width: 100%; min-width: 0; }
+}
