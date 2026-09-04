@@ -16,18 +16,33 @@ export function ScreenAnnouncer({ message }) {
   );
 }
 
-export function Shell({ children, wide = false, variant = "default" }) {
+export function BackNav({ onClick, label = "Volver" }) {
+  return (
+    <button type="button" className="back-nav" onClick={onClick}>
+      <span className="back-nav__icon" aria-hidden="true">←</span>
+      {label}
+    </button>
+  );
+}
+
+export function Shell({ children, wide = false, variant = "default", onBack }) {
   const containerClass = [
     "container",
     wide ? "wide" : "",
     variant === "landing" ? "container--landing" : "",
     variant === "access" ? "container--access" : "",
+    onBack ? "container--has-back" : "",
   ].filter(Boolean).join(" ");
 
   return (
     <div className={`app-frame app-frame--${variant}`}>
       <SkipLink />
       <main id="main-content" className={containerClass} tabIndex={-1}>
+        {onBack ? (
+          <nav className="shell-nav" aria-label="Navegación">
+            <BackNav onClick={onBack} />
+          </nav>
+        ) : null}
         {children}
         <footer className="site-footer">
           Me We v1.0 · Herramienta experiencial · No es diagnóstico clínico ni canal de emergencia
@@ -40,16 +55,22 @@ export function Shell({ children, wide = false, variant = "default" }) {
 export function TopBar({ title, subtitle, onBack, onLogout }) {
   return (
     <header className="top">
-      <div className="top__brand">
-        <BrandMark compact />
-        <div className="top__titles">
-          <h1>{title}</h1>
-          {subtitle ? <p className="muted">{subtitle}</p> : null}
+      {onBack ? (
+        <nav className="top__nav" aria-label="Navegación">
+          <BackNav onClick={onBack} />
+        </nav>
+      ) : null}
+      <div className="top__body">
+        <div className="top__brand">
+          <BrandMark compact />
+          <div className="top__titles">
+            <h1>{title}</h1>
+            {subtitle ? <p className="muted">{subtitle}</p> : null}
+          </div>
         </div>
-      </div>
-      <div className="top-actions">
-        {onBack ? <button type="button" className="btn-ghost btn-small" onClick={onBack}>Volver</button> : null}
-        {onLogout ? <button type="button" className="btn-ghost btn-small" onClick={onLogout}>Salir</button> : null}
+        <div className="top-actions">
+          {onLogout ? <button type="button" className="btn-ghost btn-small" onClick={onLogout}>Salir</button> : null}
+        </div>
       </div>
     </header>
   );
