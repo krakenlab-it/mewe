@@ -5,6 +5,12 @@ import { ComparativeReportPage } from "./pages/ComparativeReportPage";
 import { CoverPage } from "./pages/CoverPage";
 import { CrisisPage } from "./pages/CrisisPage";
 import { InteractiveDashboardPage } from "./pages/interactive/InteractiveDashboardPage";
+import { TestOnboardingPage } from "./pages/TestOnboardingPage";
+import {
+  dismissOnboarding,
+  getTestProgress,
+  shouldShowOnboarding,
+} from "./lib/onboarding";
 import { DaughterAccessPage } from "./pages/DaughterAccessPage";
 import { DaughterProfilePage } from "./pages/DaughterProfilePage";
 import { IndividualReportPage } from "./pages/IndividualReportPage";
@@ -208,7 +214,7 @@ export default function App() {
       saveSession("madre", codigo);
       setSession({ rol: "madre", codigo });
       setDupla(pair);
-      setScreen("dashboard_mother");
+      goToUserHome("madre", { fromLogin: true });
     } catch (e) {
       await alert(e.message || "No encontramos ese código");
     }
@@ -228,7 +234,11 @@ export default function App() {
       saveSession("hija", codigo);
       setSession({ rol: "hija", codigo });
       setDupla(pair);
-      setScreen(pair.hija?.nombre ? "dashboard_daughter" : "daughter_profile");
+      if (pair.hija?.nombre) {
+        goToUserHome("hija", { fromLogin: true });
+      } else {
+        setScreen("daughter_profile");
+      }
     } catch (e) {
       await alert(e.message || "No encontramos ese código");
     }
@@ -250,7 +260,46 @@ export default function App() {
     next.hija.consentimiento = { aceptadoEn: new Date().toISOString(), version: "1.0" };
     await storage.guardarDupla(session.codigo, next);
     setDupla(next);
-    setScreen("dashboard_daughter");
+    goToUserHome("hija", { fromLogin: true });
+  }
+
+  function dashboardScreenForRole(rol) {
+    return rol === "madre" ? "dashboard_mother" : "dashboard_daughter";
+  }
+
+  function onboardingScreenForRole(rol) {
+    return rol === "madre" ? "onboarding_mother" : "onboarding_daughter";
+  }
+
+  function goToUserHome(rol, { fromLogin = false } = {}) {
+    const role = rol || session.rol;
+    const persona = role === "madre" ? dupla?.madre : dupla?.hija;
+    if (fromLogin && shouldShowOnboarding(session.codigo, role, persona)) {
+      setScreen(onboardingScreenForRole(role));
+      return;
+    }
+    setScreen(dashboardScreenForRole(role));
+  }
+
+  function dismissOnboardingAndGoToDashboard(rol) {
+    dismissOnboarding(session.codigo, rol);
+    setScreen(dashboardScreenForRole(rol));
+  }
+
+  function renderTestOnboarding(rol) {
+    const persona = rol === "madre" ? dupla?.madre : dupla?.hija;
+    const { answered, total } = getTestProgress(persona, rol);
+
+    return (
+      <TestOnboardingPage
+        rol={rol}
+        nombre={persona?.nombre || ""}
+        answered={answered}
+        total={total}
+        onStartTest={startTest}
+        onGoToDashboard={() => dismissOnboardingAndGoToDashboard(rol)}
+      />
+    );
   }
 
   function startTest() {
@@ -443,9 +492,11 @@ export default function App() {
   if (screen === "mother_access") return <MotherAccessPage onCreate={() => setScreen("mother_create")} onResume={() => setScreen("mother_login")} onBack={() => setScreen("role")} />;
   if (screen === "mother_create") return <MotherCreatePage form={form} setForm={setForm} onSubmit={createMother} onBack={() => setScreen("mother_access")} />;
   if (screen === "mother_login") return <MotherLoginPage code={form.codigo || ""} setCode={(value) => setForm((f) => ({ ...f, codigo: value }))} onSubmit={resumeMother} onBack={() => setScreen("mother_access")} />;
-  if (screen === "mother_code") return <MotherCodePage codigo={dupla?.codigo} onContinue={() => setScreen("dashboard_mother")} />;
+  if (screen === "mother_code") return <MotherCodePage codigo={dupla?.codigo} onContinue={() => goToUserHome("madre", { fromLogin: true })} />;
   if (screen === "daughter_access") return <DaughterAccessPage code={form.codigo || ""} setCode={(value) => setForm((f) => ({ ...f, codigo: value }))} onSubmit={daughterEnter} onBack={() => setScreen("role")} />;
   if (screen === "daughter_profile") return <DaughterProfilePage form={form} setForm={setForm} onSubmit={completeDaughterProfile} />;
+  if (screen === "onboarding_mother") return renderTestOnboarding("madre");
+  if (screen === "onboarding_daughter") return renderTestOnboarding("hija");
   if (screen === "dashboard_mother") return renderInteractiveDashboard("madre");
   if (screen === "dashboard_daughter") return renderInteractiveDashboard("hija");
   if (screen === "test") return <TestPage rol={session.rol} pregunta={testQuestions[testIndex]} index={testIndex} total={testQuestions.length} onAnswer={answerQuestion} onPause={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} onBack={() => setScreen(session.rol === "madre" ? "dashboard_mother" : "dashboard_daughter")} />;
