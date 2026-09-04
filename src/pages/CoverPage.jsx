@@ -4,6 +4,7 @@ export function CoverPage({ onEnter }) {
   return (
     <Shell>
       <section className="hero">
+        <span className="preview-badge">Look &amp; feel de prueba</span>
         <BrandMark />
         <span className="eyebrow">Mapa de Conciencia Relacional</span>
         <h1>Una lectura clara del vínculo madre-hija.</h1>
