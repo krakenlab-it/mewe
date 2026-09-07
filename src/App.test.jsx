@@ -96,9 +96,23 @@ async function createMotherPair() {
 }
 
 async function completeCurrentUserTest(total) {
-  await clickByName(/^Empezar$/i);
+  const bannerAction = document.querySelector(".test-cta-banner-action");
+  if (bannerAction) {
+    await userEvent.click(bannerAction);
+  } else {
+    const startButton = screen.getAllByRole("button", { name: /^Empezar el test$|^Continuar el test$|^Empezar$|^Continuar$/ })[0];
+    expect(startButton).toBeTruthy();
+    await userEvent.click(startButton);
+  }
   await answerAllQuestions(total);
   await screen.findByText(/Tu mapa Me We/i);
+}
+
+async function dismissOnboardingIfPresent() {
+  const dismiss = screen.queryByRole("button", { name: /Ir al panel/i });
+  if (dismiss) {
+    await userEvent.click(dismiss);
+  }
 }
 
 async function exitToLanding() {
@@ -123,7 +137,9 @@ describe("Me We role flows", () => {
 
     const codigo = await createMotherPair();
     await clickByName(/Ir al dashboard/i);
-    await screen.findByText(/Hola, Ana/i);
+    await screen.findByRole("heading", { name: /Tu test Me We es el primer paso/i });
+    await dismissOnboardingIfPresent();
+    await screen.findByText(/¡Hola, Ana/i);
     await completeCurrentUserTest(PREGUNTAS.madre.length);
     expect(screen.getByRole("heading", { level: 2, name: /Ana/i })).toBeInTheDocument();
     await exitToLanding();
@@ -136,7 +152,9 @@ describe("Me We role flows", () => {
     await userEvent.type(screen.getByLabelText(/Nombre o apodo/i), "Luna");
     await userEvent.click(screen.getByLabelText(/Entiendo y quiero empezar/i));
     await clickByName(/Sigamos/i);
-    await screen.findByText(/Hola, Luna/i);
+    await screen.findByRole("heading", { name: /Tu test Me We te espera/i });
+    await dismissOnboardingIfPresent();
+    await screen.findByText(/¡Hola, Luna/i);
     await completeCurrentUserTest(PREGUNTAS.hija.length);
     expect(screen.getByRole("heading", { level: 2, name: /Luna/i })).toBeInTheDocument();
     await exitToLanding();
@@ -165,5 +183,17 @@ describe("Me We role flows", () => {
     await userEvent.click(within(pairRow).getByRole("button", { name: /Ver comparativo/i }));
     await screen.findByRole("heading", { name: /Mapa de la dupla/i });
     await screen.findByText(/Brecha promedio/i);
+  });
+
+  it("shows onboarding after login and allows starting the test directly", async () => {
+    await openApp();
+    await createMotherPair();
+    await clickByName(/Ir al dashboard/i);
+    await screen.findByRole("button", { name: "Empezar el test" });
+    await userEvent.click(screen.getByRole("button", { name: "Empezar el test" }));
+    await screen.findByText(new RegExp(`Pregunta 1 de ${PREGUNTAS.madre.length}`));
+    await userEvent.click(screen.getByRole("button", { name: /Pausar y volver/i }));
+    await screen.findByText(/Completa tu test Me We/i);
+    expect(screen.queryByRole("heading", { name: /Tu test Me We es el primer paso/i })).not.toBeInTheDocument();
   });
 });

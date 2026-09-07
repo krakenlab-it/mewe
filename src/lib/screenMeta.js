@@ -9,6 +9,8 @@ export const SCREEN_TITLES = {
   mother_code: "Código de dupla",
   daughter_access: "Acceso hija",
   daughter_profile: "Perfil hija",
+  onboarding_mother: "Onboarding madre",
+  onboarding_daughter: "Onboarding hija",
   dashboard_mother: "Dashboard madre",
   dashboard_daughter: "Dashboard hija",
   test: "Test Me We",

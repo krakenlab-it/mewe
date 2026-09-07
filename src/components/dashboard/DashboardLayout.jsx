@@ -13,6 +13,7 @@ export function DashboardLayout({
   onStartTest,
   onViewReport,
   onViewComparative,
+  testProgress,
   children,
 }) {
   return (
@@ -23,6 +24,9 @@ export function DashboardLayout({
           section={section}
           onNavigate={onNavigate}
           rol={rol}
+          testProgress={testProgress}
+          onStartTest={onStartTest}
+          onViewReport={onViewReport}
         />
         <div className="dashboard-main">
           <DashboardHeader
