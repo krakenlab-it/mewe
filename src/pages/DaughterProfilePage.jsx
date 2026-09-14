@@ -1,9 +1,9 @@
 import { ConsentBox, Field, Shell } from "../components/ui";
 import { DAUGHTER_ASSENT_PARAGRAPHS } from "../data/content";
 
-export function DaughterProfilePage({ form, setForm, onSubmit }) {
+export function DaughterProfilePage({ form, setForm, onSubmit, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <h2>¿Cómo te llamas? 🌱</h2>
       <Field label="Nombre o apodo">
         <input

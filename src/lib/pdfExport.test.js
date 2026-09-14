@@ -38,7 +38,7 @@ describe("pdfExport", () => {
 
     expect(html2canvas).toHaveBeenCalledWith(
       expect.any(HTMLElement),
-      expect.objectContaining({ backgroundColor: "#FBF5EE", scale: 1.6 }),
+      expect.objectContaining({ backgroundColor: "#F3F6FA", scale: 1.6 }),
     );
     expect(jsPDF).toHaveBeenCalledWith("p", "mm", "a4");
     expect(addImage).toHaveBeenCalled();

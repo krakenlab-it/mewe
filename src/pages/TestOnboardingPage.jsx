@@ -24,6 +24,7 @@ export function TestOnboardingPage({
   total,
   onStartTest,
   onGoToDashboard,
+  onBack,
 }) {
   const primaryRef = useRef(null);
   const copy = COPY[rol] || COPY.madre;
@@ -35,7 +36,7 @@ export function TestOnboardingPage({
   }, []);
 
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <section
         className="test-onboarding"
         aria-labelledby="test-onboarding-title"

@@ -2,7 +2,7 @@ import { Field, Shell } from "../components/ui";
 
 export function AdminLoginPage({ form, setForm, onSubmit, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <h2>Acceso facilitadora</h2>
       <Field label="Email">
         <input
@@ -20,7 +20,6 @@ export function AdminLoginPage({ form, setForm, onSubmit, onBack }) {
         />
       </Field>
       <button onClick={onSubmit}>Entrar al dashboard</button>
-      <button className="ghost" onClick={onBack}>Volver</button>
     </Shell>
   );
 }

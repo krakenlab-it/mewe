@@ -41,10 +41,11 @@
 .dashboard-main { display: flex; flex-direction: column; min-height: 100vh; background: rgba(255, 253, 249, 0.6); }
 
 .dashboard-header {
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
   padding: 20px 28px; border-bottom: 1px solid var(--border);
   background: linear-gradient(135deg, rgba(126, 200, 227, 0.15), rgba(245, 215, 110, 0.12), rgba(232, 139, 139, 0.1));
 }
+.dashboard-header-back { flex: 1 0 100%; }
 .dashboard-header-info { display: flex; align-items: center; gap: 14px; }
 .dashboard-avatar {
   width: 48px; height: 48px; border-radius: 50%;
