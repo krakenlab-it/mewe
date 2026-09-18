@@ -47,7 +47,7 @@ function readStoredUser(): User | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => readStoredUser());
   const [isLoading, setIsLoading] = useState(false);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const login = (userData: User, token: string) => {
     const normalized = normalizeUser(userData);
@@ -113,6 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    const stored = readStoredUser();
+    if (stored) {
+      setUser(stored);
+    }
+  }, [location]);
 
   const value: AuthContextType = {
     user,
