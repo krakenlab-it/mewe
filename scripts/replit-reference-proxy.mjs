@@ -3,6 +3,12 @@ import { createServer } from "node:http";
 const TARGET = process.env.REPLIT_REF_URL || "https://juntas-fuertes--yepezmancheno.replit.app";
 const PORT = Number(process.env.REPLIT_REF_PORT || 5173);
 
+async function readBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+
 const server = createServer(async (req, res) => {
   const targetUrl = new URL(req.url || "/", TARGET);
   const headers = new Headers();
@@ -12,10 +18,14 @@ const server = createServer(async (req, res) => {
     }
   }
 
+  const method = req.method || "GET";
+  const body = ["GET", "HEAD"].includes(method) ? undefined : await readBody(req);
+
   try {
     const upstream = await fetch(targetUrl, {
-      method: req.method,
+      method,
       headers,
+      body,
       redirect: "follow",
     });
     res.statusCode = upstream.status;

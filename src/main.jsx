@@ -1,15 +1,16 @@
 import { createRoot } from "react-dom/client";
-import AssessmentApp from "./App";
-import ReplitApp from "./replit-app/App";
 import { installLocalApi } from "./replit-app/lib/local-api";
 import "./replit-app/index.css";
-import "./styles.css";
-import "./dashboard.css";
 
 installLocalApi();
 
+const root = createRoot(document.getElementById("root"));
 const isTaller = window.location.pathname.startsWith("/taller");
 
-createRoot(document.getElementById("root")).render(
-  isTaller ? <AssessmentApp /> : <ReplitApp />,
-);
+if (isTaller) {
+  const { default: AssessmentApp } = await import("./App.jsx");
+  root.render(<AssessmentApp />);
+} else {
+  const { default: ReplitApp } = await import("./replit-app/App");
+  root.render(<ReplitApp />);
+}
