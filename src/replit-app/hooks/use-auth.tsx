@@ -23,16 +23,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [, setLocation] = useLocation();
-
-  const normalizeUser = (userData: User & { firstName?: string; lastName?: string }): User => ({
+function normalizeUser(userData: User & { firstName?: string; lastName?: string }): User {
+  return {
     ...userData,
     nombre: userData.nombre || userData.firstName || "",
     apellido: userData.apellido || userData.lastName,
-  });
+  };
+}
+
+function readStoredUser(): User | null {
+  try {
+    const token = localStorage.getItem("userToken");
+    const raw = localStorage.getItem("currentUser");
+    if (!token || !raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.id) return null;
+    return normalizeUser(parsed);
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(() => readStoredUser());
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setLocation] = useLocation();
 
   const login = (userData: User, token: string) => {
     const normalized = normalizeUser(userData);

@@ -22,27 +22,11 @@ import PhotoUploadDemo from "@/pages/photo-upload-demo";
 import UniversalUploadDemo from "@/pages/universal-upload-demo";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  // Authentication is now properly enabled
-  const skipAuth = false;
-  
-  if (!skipAuth && isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuth();
 
-  if (!skipAuth && !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <Switch>
-        <Route path="/login" component={AuthLogin} />
-        <Route path="/auth" component={AuthLogin} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route>
@@ -54,8 +38,8 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/login" component={AuthLogin} />
-      <Route path="/auth" component={AuthLogin} />
+      <Route path="/login" component={Home} />
+      <Route path="/auth" component={Home} />
       <Route path="/" component={Home} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/activities" component={Activities} />

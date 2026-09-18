@@ -1,6 +1,6 @@
 # Replit parity — exact port
 
-Production mewe at `/` now mounts the Replit client (colors, layout, 428px mobile shell, activities, games, connection, rewards, terms/checkboxes). The assessment remains at `/taller`.
+Production mewe at `/` now mounts the Replit client (colors, layout, 428px mobile shell, activities, games, connection, rewards, terms/checkboxes). **Entry is login → dashboard** (KAN-90): no marketing cover, no splash, no test-profile gate. The assessment remains at `/taller`.
 
 ## How to open both apps on this VM
 

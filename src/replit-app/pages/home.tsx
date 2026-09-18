@@ -28,36 +28,13 @@ export default function Home() {
   const { user, isLoading } = useAuth();
   const [currentMood, setCurrentMood] = useState(3);
   const [showWhatsAppSettings, setShowWhatsAppSettings] = useState(false);
-  const [testUser, setTestUser] = useState<any>(null);
   const { toast } = useToast();
 
-  // Check for test user from test profiles page
   useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        // Check if this is an old invalid user ID
-        const invalidIds = [
-          'd54c8625-077b-4343-8f83-b8934ca4604b',
-          '1e45ff9c-945f-421d-b9d4-b88fc3a25a5c',
-          'KI6LfZTRtbxLeAKxdPybs',
-          'frvceVDfzgj0FJmvOEnqz'
-        ];
-        
-        if (parsed && parsed.id && !invalidIds.includes(parsed.id)) {
-          setTestUser(parsed);
-        } else {
-          // Clear invalid user and redirect to test profiles
-          localStorage.removeItem("currentUser");
-          window.location.href = "/test-profiles";
-        }
-      } catch (e) {
-        console.error("Error parsing stored user:", e);
-        localStorage.removeItem("currentUser");
-      }
+    if (!isLoading && !user) {
+      setLocation("/login");
     }
-  }, []);
+  }, [isLoading, user, setLocation]);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -95,25 +72,10 @@ export default function Home() {
     );
   }
 
-  // Use test user if available (from test profiles page), otherwise use authenticated user
-  const currentUser = testUser || user;
-  
-  // If no user is available, redirect to test profiles
+  const currentUser = user;
+
   if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-warm-gray-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-4 bg-white p-6 rounded-lg shadow-lg">
-          <p className="text-red-600 font-semibold">No hay usuario activo</p>
-          <p className="text-gray-600">Por favor, selecciona un perfil de prueba primero</p>
-          <Button 
-            onClick={() => setLocation("/test-profiles")}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            Ir a Perfiles de Prueba
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const headerGradient = getMoodGradient(currentMood);
