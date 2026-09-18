@@ -192,6 +192,7 @@ function createUser({ id, firstName, lastName, email, role, edad, partnerId, con
     edad,
     partnerId: partnerId || null,
     connectionCode: connectionCode || null,
+    fechaTaller: nowIso(),
     isActive: true,
     createdAt: nowIso(),
   };

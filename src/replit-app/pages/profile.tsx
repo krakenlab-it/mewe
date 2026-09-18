@@ -171,7 +171,9 @@ export default function Profile() {
                 <div className="flex justify-between">
                   <span className="text-warm-gray-600">Fecha del Taller:</span>
                   <span className="font-medium">
-                    {format(new Date(currentUser.fechaTaller), "PPP", { locale: es })}
+                    {currentUser.fechaTaller
+                      ? format(new Date(currentUser.fechaTaller), "PPP", { locale: es })
+                      : "Pendiente"}
                   </span>
                 </div>
               </div>
