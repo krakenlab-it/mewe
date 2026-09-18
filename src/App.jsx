@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import "./styles.css";
+import "./dashboard.css";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
 import { ComparativeReportPage } from "./pages/ComparativeReportPage";

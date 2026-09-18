@@ -2,12 +2,25 @@
 
 ME WE web app with Vite frontend and Supabase backend (DB-first architecture).
 
+The default app at `/` is the **Replit Me We port** (login, terms, mood, workshop activities, games, connection codes, Pamela chat, charms/rewards). The 96-question assessment stays at `/taller`.
+
 ## Local development
 
 ```bash
 npm install
 npm run dev
 ```
+
+Open production mewe on **http://localhost:5174**. Demo login: `demo@mewe.test` / `MeWeDemo2026!`.
+
+To compare against live Replit on this machine at the same time:
+
+```bash
+npm run ref    # Replit reference proxy on http://localhost:5173
+npm run dev    # production mewe on http://localhost:5174
+```
+
+See [`docs/replit-parity/README.md`](docs/replit-parity/README.md) for the screen checklist and smoke steps.
 
 For offline development without Supabase, create `.env.local`:
 
