@@ -1,4 +1,9 @@
 import { createSupabaseBrowserClient } from "../../lib/supabaseClient.js";
+import {
+  buildWhatsAppLink,
+  deliverViaWebhook,
+  generateMotivationalMessage,
+} from "./whatsapp.js";
 
 const STORE_KEY = "mewe.replit.store.v1";
 
@@ -330,7 +335,47 @@ function seedStore() {
     notificationSettings: [],
     botInteractions: [],
     objects: {},
+    whatsappMessages: [],
+    consents: users.map((user) => ({
+      id: uid("consent"),
+      userId: user.id,
+      accepted: true,
+      acceptedAt: nowIso(),
+      version: "lopdp-2026",
+      source: "seed",
+    })),
   };
+}
+
+function ensureStoreShape(store) {
+  const listKeys = [
+    "users",
+    "deactivatedEmails",
+    "moodEntries",
+    "charms",
+    "userCharms",
+    "suggestedActivities",
+    "scheduledActivities",
+    "activityTemplates",
+    "achievements",
+    "userAchievements",
+    "legoPieces",
+    "files",
+    "conversations",
+    "workshopPersonalInfo",
+    "workshopResults",
+    "notificationSettings",
+    "botInteractions",
+    "whatsappMessages",
+    "consents",
+  ];
+  listKeys.forEach((key) => {
+    if (!Array.isArray(store[key])) store[key] = [];
+  });
+  if (!store.tokens || typeof store.tokens !== "object") store.tokens = {};
+  if (!store.adminTokens || typeof store.adminTokens !== "object") store.adminTokens = {};
+  if (!store.objects || typeof store.objects !== "object") store.objects = {};
+  return store;
 }
 
 function loadStore() {
@@ -338,7 +383,7 @@ function loadStore() {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed?.users?.length) return parsed;
+      if (parsed?.users?.length) return ensureStoreShape(parsed);
     }
   } catch {
     // fall through to seed
@@ -490,6 +535,17 @@ async function handleApi(method, url, init = {}) {
       edad: Number(body.edad) || 30,
     });
     created.password = body.password || DEMO_PASSWORD;
+    if (body.acceptTerms !== false) {
+      created.acceptedTermsAt = nowIso();
+      store.consents.push({
+        id: uid("consent"),
+        userId: created.id,
+        accepted: true,
+        acceptedAt: nowIso(),
+        version: "lopdp-2026",
+        source: "register",
+      });
+    }
     store.users.push(created);
     store.suggestedActivities.push(...seedSuggested(created.id, created.role));
     const token = uid("tok");
@@ -541,6 +597,8 @@ async function handleApi(method, url, init = {}) {
     Object.assign(found, body);
     if (body.firstName) found.nombre = body.firstName;
     if (body.lastName) found.apellido = body.lastName;
+    if (body.nombre) found.firstName = body.nombre;
+    if (body.apellido) found.lastName = body.apellido;
     saveStore(store);
     return jsonResponse(publicUser(found));
   }
@@ -690,12 +748,74 @@ async function handleApi(method, url, init = {}) {
     return jsonResponse(existing || store.notificationSettings.at(-1));
   }
 
+  params = route("/api/users/:id/whatsapp-messages");
+  if (params && method === "GET") {
+    return jsonResponse(
+      store.whatsappMessages.filter((item) => item.userId === params.id),
+    );
+  }
+
+  params = route("/api/users/:id/consent");
+  if (params && method === "GET") {
+    const latest = [...store.consents].reverse().find((item) => item.userId === params.id);
+    return jsonResponse(latest || { userId: params.id, accepted: false });
+  }
+  if (params && (method === "POST" || method === "PUT" || method === "PATCH")) {
+    const record = {
+      id: uid("consent"),
+      userId: params.id,
+      accepted: body.accepted !== false,
+      acceptedAt: body.accepted === false ? null : nowIso(),
+      revokedAt: body.accepted === false ? nowIso() : null,
+      version: body.version || "lopdp-2026",
+      source: body.source || "profile",
+    };
+    store.consents.push(record);
+    const found = store.users.find((candidate) => candidate.id === params.id);
+    if (found) {
+      found.acceptedTermsAt = record.accepted ? record.acceptedAt : null;
+    }
+    saveStore(store);
+    return jsonResponse(record);
+  }
+
   params = route("/api/users/:id/send-motivational-message");
   if (params && method === "POST") {
+    const found = store.users.find((candidate) => candidate.id === params.id);
+    const settings = store.notificationSettings.find((item) => item.userId === params.id) || {};
+    const number = body.whatsappNumber || settings.whatsappNumber || "";
+    const messageType = body.messageType || "motivational";
+    const preview = generateMotivationalMessage(messageType, found);
+    const waMeUrl = buildWhatsAppLink(number, preview);
+    const webhookOk = await deliverViaWebhook({
+      userId: params.id,
+      whatsappNumber: number,
+      messageType,
+      text: preview,
+    });
+    const deliveredVia = [];
+    if (webhookOk) deliveredVia.push("webhook");
+    if (waMeUrl) deliveredVia.push("wa.me");
+    const record = {
+      id: uid("wa"),
+      userId: params.id,
+      messageType,
+      text: preview,
+      whatsappNumber: number,
+      waMeUrl,
+      deliveredVia,
+      createdAt: nowIso(),
+    };
+    store.whatsappMessages.push(record);
+    saveStore(store);
     return jsonResponse({
       ok: true,
-      message: "Mensaje motivacional listo (demo local, sin WhatsApp real).",
-      preview: "Recuerden: 10 minutos juntas hoy valen más que una conversación perfecta mañana.",
+      message: webhookOk
+        ? "Mensaje enviado por el canal de WhatsApp configurado."
+        : "Mensaje listo para WhatsApp.",
+      preview,
+      waMeUrl,
+      deliveredVia,
     });
   }
 
@@ -814,9 +934,24 @@ async function handleApi(method, url, init = {}) {
       type: body.type || "custom",
       status: body.status || "scheduled",
       emoji: body.emoji || "💜",
+      reminderSent: false,
       createdAt: nowIso(),
     };
     store.scheduledActivities.push(item);
+    saveStore(store);
+    return jsonResponse(item);
+  }
+
+  params = route("/api/scheduled-activities/:id/snooze");
+  if (params && method === "POST") {
+    const item = store.scheduledActivities.find((candidate) => candidate.id === params.id);
+    if (!item) return jsonResponse({ message: "No encontrada" }, 404);
+    const minutes = Number(body.minutes) || 5;
+    const next = new Date(Date.now() + minutes * 60 * 1000);
+    item.scheduledDate = next.toISOString();
+    item.snoozedUntil = next.toISOString();
+    item.status = "scheduled";
+    item.reminderSent = false;
     saveStore(store);
     return jsonResponse(item);
   }
@@ -856,7 +991,8 @@ async function handleApi(method, url, init = {}) {
     const item = store.scheduledActivities.find((candidate) => candidate.id === params.id);
     if (!item) return jsonResponse({ message: "No encontrada" }, 404);
     Object.assign(item, body);
-    if (body.status === "completed") item.completedAt = nowIso();
+    if (body.status === "completed") item.completedAt = body.completedAt || nowIso();
+    if (body.status === "confirmed") item.reminderSent = true;
     saveStore(store);
     return jsonResponse(item);
   }
@@ -1075,4 +1211,4 @@ export function installLocalApi() {
   };
 }
 
-export { loadStore, saveStore, seedStore, STORE_KEY };
+export { loadStore, saveStore, seedStore, STORE_KEY, generateMotivationalMessage, buildWhatsAppLink };

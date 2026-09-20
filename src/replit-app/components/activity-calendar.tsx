@@ -14,6 +14,7 @@ import { format, startOfWeek, addDays, isSameDay, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import type { ScheduledActivity } from "@shared/schema";
 import ActivityNotification from "./activity-notification";
+import { showBrowserNotification } from "@/lib/browser-notifications";
 
 interface ActivityCalendarProps {
   userId: string;
@@ -107,8 +108,12 @@ export default function ActivityCalendar({ userId, userRole }: ActivityCalendarP
 
       if (upcomingActivity && !currentNotification) {
         setCurrentNotification(upcomingActivity);
-        // Marcar como notificada
         setNotifiedActivities(prev => new Set(prev).add(upcomingActivity.id));
+        showBrowserNotification(
+          "Es hora de tu actividad Me We",
+          upcomingActivity.title,
+          `mewe-activity-${upcomingActivity.id}`,
+        );
       }
     };
 
@@ -426,9 +431,26 @@ export default function ActivityCalendar({ userId, userRole }: ActivityCalendarP
       return response.json();
     },
     onSuccess: (data: any) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/scheduled-activities", userId],
+        exact: false,
+      });
+      toast({
+        title: "Programa semanal listo",
+        description: data?.count
+          ? `Se programaron ${data.count} actividades esta semana.`
+          : "El calendario semanal se actualizó.",
+      });
       if (data.showTemplateMenu) {
         setShowActivityMenu(true);
       }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo generar el programa semanal.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -473,18 +495,46 @@ export default function ActivityCalendar({ userId, userRole }: ActivityCalendarP
   };
 
   const handleNotificationDismiss = () => {
-    // Limpiar la notificación actual
+    if (currentNotification && currentNotification.id !== "test-notification") {
+      updateActivityMutation.mutate({
+        id: currentNotification.id,
+        updates: { status: "confirmed", reminderSent: true },
+      });
+    }
     setCurrentNotification(null);
   };
 
-  const handleNotificationSnooze = (minutes: number) => {
-    // Implementar snooze - reprogramar notificación
-    if (currentNotification) {
-      setTimeout(() => {
-        setCurrentNotification(currentNotification);
-      }, minutes * 60 * 1000);
+  const handleNotificationSnooze = async (minutes: number) => {
+    if (!currentNotification) return;
+    const activity = currentNotification;
+    if (activity.id !== "test-notification") {
+      try {
+        await apiRequest("POST", `/api/scheduled-activities/${activity.id}/snooze`, { minutes });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/scheduled-activities", userId],
+          exact: false,
+        });
+      } catch {
+        toast({
+          title: "No se pudo posponer",
+          description: "Inténtalo de nuevo en un momento.",
+          variant: "destructive",
+        });
+      }
     }
+    setNotifiedActivities((prev) => {
+      const next = new Set(prev);
+      next.delete(activity.id);
+      return next;
+    });
     setCurrentNotification(null);
+    window.setTimeout(() => {
+      setCurrentNotification(activity);
+    }, minutes * 60 * 1000);
+    toast({
+      title: `Te recordamos en ${minutes} min`,
+      description: activity.title,
+    });
   };
 
   const getStatusColor = (status: string) => {

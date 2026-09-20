@@ -16,7 +16,7 @@ import ProfileImageUpload from "@/components/profile-image-upload";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare, LogOut } from "lucide-react";
 import { getMoodGradient } from "@/lib/mood-colors";
-import WhatsAppNotifications from "@/components/whatsapp-notifications";
+import WhatsAppNotifications, { WhatsAppReminderHost } from "@/components/whatsapp-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [currentMood, setCurrentMood] = useState(3);
   const [showWhatsAppSettings, setShowWhatsAppSettings] = useState(false);
   const { toast } = useToast();
@@ -41,19 +41,12 @@ export default function Home() {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      // Clear all user data
       queryClient.clear();
-      localStorage.removeItem("currentUser");
-      
-      // Force immediate redirect
-      window.location.href = "/auth";
+      logout();
     },
-    onError: (error: Error) => {
-      console.error("Error logging out:", error);
-      // Even if there's an error, force logout
+    onError: () => {
       queryClient.clear();
-      localStorage.removeItem("currentUser");
-      window.location.href = "/auth";
+      logout();
     },
   });
 
@@ -235,6 +228,7 @@ export default function Home() {
       </div>
 
       {/* WhatsApp Notifications Settings */}
+      <WhatsAppReminderHost userId={currentUser.id} />
       <WhatsAppNotifications
         userId={currentUser.id}
         isOpen={showWhatsAppSettings}

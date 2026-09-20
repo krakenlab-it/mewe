@@ -5,9 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { User, Settings, Heart, Users, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import WhatsAppNotifications from "@/components/whatsapp-notifications";
+import { ConsentTermsContent, ConsentTermsHeading } from "@/components/consent-terms";
+import { User, Settings, Heart, Users, ArrowLeft, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 import { es } from "date-fns/locale";
@@ -15,12 +19,16 @@ import type { User as UserType } from "@shared/schema";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
+  const { logout } = useAuth();
   const [currentUser, setCurrentUser] = useState<UserType | null>(() => {
     const stored = localStorage.getItem("currentUser");
     return stored ? JSON.parse(stored) : null;
   });
   
   const [isEditing, setIsEditing] = useState(false);
+  const [showWhatsApp, setShowWhatsApp] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [editForm, setEditForm] = useState({
     nombre: currentUser?.nombre || "",
     apellido: currentUser?.apellido || "",
@@ -32,6 +40,11 @@ export default function Profile() {
   const { data: partner } = useQuery<UserType>({
     queryKey: ["/api/users", currentUser?.partnerId],
     enabled: !!currentUser?.partnerId,
+  });
+
+  const { data: consent } = useQuery<{ accepted?: boolean; acceptedAt?: string | null }>({
+    queryKey: [`/api/users/${currentUser?.id}/consent`],
+    enabled: !!currentUser?.id,
   });
 
   const updateUserMutation = useMutation({
@@ -57,8 +70,52 @@ export default function Profile() {
     },
   });
 
+  const revokeConsentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/users/${currentUser?.id}/consent`, {
+        accepted: false,
+        source: "profile",
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${currentUser?.id}/consent`] });
+      toast({
+        title: "Consentimiento revocado",
+        description: "Puedes volver a aceptarlo cuando quieras. Tu cuenta sigue activa.",
+      });
+    },
+  });
+
+  const acceptConsentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/users/${currentUser?.id}/consent`, {
+        accepted: true,
+        source: "profile",
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${currentUser?.id}/consent`] });
+      toast({
+        title: "Consentimiento registrado",
+        description: "Quedó guardado el acuerdo LOPDP de Me We.",
+      });
+    },
+  });
+
   const handleSaveProfile = () => {
     updateUserMutation.mutate(editForm);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest("POST", "/api/logout");
+    } catch {
+      // Still leave the session locally.
+    }
+    globalQueryClient.clear();
+    logout();
   };
 
   if (!currentUser) {
@@ -231,22 +288,109 @@ export default function Profile() {
             </h3>
             
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowWhatsApp(true)}
+                data-testid="button-daily-notifications"
+              >
                 Notificaciones diarias
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowPrivacy(true)}
+                data-testid="button-privacy"
+              >
                 Privacidad y datos
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowHelp(true)}
+                data-testid="button-help"
+              >
                 Ayuda y soporte
               </Button>
-              <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
+              <Button
+                variant="outline"
+                className="w-full justify-start text-red-600 hover:text-red-700"
+                onClick={handleLogout}
+                data-testid="button-profile-logout"
+              >
                 Cerrar sesión
               </Button>
             </div>
           </CardContent>
         </Card>
       </main>
+
+      <WhatsAppNotifications
+        userId={currentUser.id}
+        isOpen={showWhatsApp}
+        onClose={() => setShowWhatsApp(false)}
+      />
+
+      <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              <ConsentTermsHeading />
+            </DialogTitle>
+            <DialogDescription>
+              {consent?.accepted
+                ? "Tu consentimiento LOPDP está activo. Puedes leerlo de nuevo o revocarlo."
+                : "Aún no hay un consentimiento activo. Léelo y acéptalo para usar notificaciones y WhatsApp."}
+            </DialogDescription>
+          </DialogHeader>
+          <ConsentTermsContent />
+          <div className="flex gap-2">
+            {consent?.accepted ? (
+              <Button
+                variant="outline"
+                className="flex-1 text-red-600"
+                onClick={() => revokeConsentMutation.mutate()}
+                disabled={revokeConsentMutation.isPending}
+                data-testid="button-revoke-consent"
+              >
+                Revocar consentimiento
+              </Button>
+            ) : (
+              <Button
+                className="flex-1"
+                onClick={() => acceptConsentMutation.mutate()}
+                disabled={acceptConsentMutation.isPending}
+                data-testid="button-accept-consent"
+              >
+                Aceptar acuerdo
+              </Button>
+            )}
+            <Button variant="outline" className="flex-1" onClick={() => setShowPrivacy(false)}>
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showHelp} onOpenChange={setShowHelp}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ayuda y soporte</DialogTitle>
+            <DialogDescription>
+              Equipo Me We — Pamela Gabela y facilitadoras del taller.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-warm-gray-700">
+            <p>Si algo no carga o quieres desuscribirte, escríbenos. No pedimos contraseñas por chat.</p>
+            <p className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              <a className="text-purple-700 underline" href="mailto:privacy@mewe.ec">privacy@mewe.ec</a>
+            </p>
+            <p>WhatsApp y el calendario viven en Inicio. El acuerdo LOPDP está en Privacidad y datos.</p>
+          </div>
+          <Button onClick={() => setShowHelp(false)} data-testid="button-help-close">Entendido</Button>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>

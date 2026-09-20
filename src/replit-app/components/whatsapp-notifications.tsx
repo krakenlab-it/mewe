@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, Send, Settings, Clock, Phone } from "lucide-react";
+import { requestNotificationPermission, scheduleWhatsAppReminder } from "@/lib/browser-notifications";
 
 interface WhatsAppNotificationsProps {
   userId: string;
@@ -51,8 +52,14 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
   const [testMessageType, setTestMessageType] = useState("motivational");
 
   // Obtener configuración actual
-  const { data: currentSettings, isLoading } = useQuery({
+  const { data: currentSettings } = useQuery({
     queryKey: [`/api/users/${userId}/notification-settings`],
+    enabled: isOpen && !!userId,
+    retry: false
+  });
+
+  const { data: messageLog = [] } = useQuery<any[]>({
+    queryKey: [`/api/users/${userId}/whatsapp-messages`],
     enabled: isOpen && !!userId,
     retry: false
   });
@@ -66,10 +73,12 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
       const response = await apiRequest(method, url, data);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await requestNotificationPermission();
+      scheduleWhatsAppReminder(settings);
       toast({
         title: "Configuración guardada",
-        description: "Tus preferencias de notificaciones se han actualizado exitosamente"
+        description: "Tus preferencias de WhatsApp y el recordatorio del navegador quedaron activos."
       });
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/notification-settings`] });
     },
@@ -88,24 +97,22 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
       const response = await apiRequest("POST", `/api/users/${userId}/send-motivational-message`, { messageType });
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      const viaWebhook = Array.isArray(data?.deliveredVia) && data.deliveredVia.includes("webhook");
+      if (data?.waMeUrl && !viaWebhook) {
+        window.open(data.waMeUrl, "_blank", "noopener,noreferrer");
+      }
       toast({
-        title: "Mensaje de prueba enviado",
-        description: "En modo demo, el mensaje se simula exitosamente. Revisa los logs del servidor para ver el contenido."
+        title: viaWebhook ? "Mensaje enviado" : "WhatsApp listo",
+        description: data?.preview || "Tu mensaje quedó guardado y listo para enviar."
       });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/whatsapp-messages`] });
     },
     onError: (error: any) => {
-      console.error("Test message error:", error);
-      let errorMessage = "No se pudo enviar el mensaje de prueba";
-      
-      if (error.message?.includes("400")) {
-        errorMessage = "En modo demo, todos los mensajes se simulan. Si ver este error, revisa la configuración del servidor.";
-      }
-      
       toast({
-        title: "Información",
-        description: errorMessage,
-        variant: "default"
+        title: "No se pudo preparar el mensaje",
+        description: error.message || "Revisa el número de WhatsApp e inténtalo de nuevo.",
+        variant: "destructive"
       });
     }
   });
@@ -285,10 +292,16 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
                 disabled={testMessageMutation.isPending || !settings.whatsappNumber}
                 className="w-full"
                 variant="outline"
+                data-testid="button-whatsapp-test"
               >
                 <Send className="w-4 h-4 mr-2" />
                 {testMessageMutation.isPending ? "Enviando..." : "Enviar mensaje de prueba"}
               </Button>
+              {Array.isArray(messageLog) && messageLog.length > 0 && (
+                <p className="text-xs text-muted-foreground" data-testid="whatsapp-last-preview">
+                  Último: {messageLog[messageLog.length - 1]?.text}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -305,6 +318,7 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
               onClick={handleSaveSettings}
               disabled={settingsMutation.isPending}
               className="flex-1"
+              data-testid="button-whatsapp-save"
             >
               <Settings className="w-4 h-4 mr-2" />
               {settingsMutation.isPending ? "Guardando..." : "Guardar"}
@@ -314,4 +328,25 @@ export default function WhatsAppNotifications({ userId, isOpen, onClose }: Whats
       </DialogContent>
     </Dialog>
   );
+}
+
+export function WhatsAppReminderHost({ userId }: { userId: string }) {
+  const { data: currentSettings } = useQuery({
+    queryKey: [`/api/users/${userId}/notification-settings`],
+    enabled: !!userId,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const settings = currentSettings as { isActive?: boolean; preferredTime?: string; frequency?: string } | undefined;
+    if (settings?.isActive) {
+      scheduleWhatsAppReminder({
+        isActive: settings.isActive,
+        preferredTime: settings.preferredTime,
+        frequency: settings.frequency,
+      });
+    }
+  }, [currentSettings]);
+
+  return null;
 }

@@ -161,6 +161,7 @@ export default function ActivityNotification({
               onClick={() => onSnooze(5)}
               variant="outline"
               className="flex-1"
+              data-testid="button-snooze-5"
             >
               ⏰ Recordar en 5min
             </Button>
@@ -169,6 +170,7 @@ export default function ActivityNotification({
               onClick={() => onSnooze(15)}
               variant="outline"
               className="flex-1"
+              data-testid="button-snooze-15"
             >
               ⏰ Recordar en 15min
             </Button>
@@ -178,6 +180,7 @@ export default function ActivityNotification({
             <Button
               onClick={onDismiss}
               className="flex-1"
+              data-testid="button-activity-start"
             >
               ✅ ¡Vamos a hacerlo!
             </Button>

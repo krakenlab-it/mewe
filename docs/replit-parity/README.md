@@ -27,9 +27,9 @@ Replit proxy target (no secrets): `https://juntas-fuertes--yepezmancheno.replit.
 - [ ] `/connection` generate / enter pair code
 - [ ] `/progress` mood + achievements
 - [ ] `/chat` Pamela assistant
-- [ ] `/profile` partner + settings
+- [ ] `/profile` partner + settings (notifications, LOPDP, help, logout)
 - [ ] Charms / rewards (Para Mamá / Para Hija, locked special piece)
-- [ ] Calendar, WhatsApp settings, workshop confidential form
+- [ ] Calendar create/complete/weekly, timer snooze that persists, WhatsApp wa.me + optional webhook
 - [ ] `/taller` still loads the 96-question assessment
 
 ## What was missing before (#6 / #7)
@@ -48,3 +48,9 @@ Prior interactive ports only stubbed a terracotta dashboard with 3 workshop card
 ## Assets
 
 Exact Replit filenames live in `attached_assets/`, including the 1024×1024 mother-daughter charm/LEGO photos from the Drive dump (`image_1754076796918.png` and siblings). Production does **not** ship Express/Neon: `/` uses the Replit client + a local `/api` adapter (localStorage, optional Supabase `mewe_replit_store`). `/taller` remains the 96-question assessment on the existing Supabase path.
+
+## Production feature path (no secrets)
+
+- **WhatsApp:** settings persist on `/api/users/:id/notification-settings`. Test send writes `/api/users/:id/whatsapp-messages`, opens `wa.me`, and optionally POSTs to `VITE_MEWE_WHATSAPP_WEBHOOK_URL`. Browser reminders use the Notification API at the preferred time.
+- **Timer / calendar:** snooze PATCHes the activity time via `/api/scheduled-activities/:id/snooze`. Dismiss confirms the activity. Weekly schedule and templates write real calendar rows.
+- **User / contracts:** profile edit PATCHes `/api/users/:id`. Register stores LOPDP consent. Profile **Privacidad y datos** reopens the same agreement and can revoke/re-accept it. Logout clears token + session.
