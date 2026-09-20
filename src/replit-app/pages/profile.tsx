@@ -365,7 +365,12 @@ export default function Profile() {
                 Aceptar acuerdo
               </Button>
             )}
-            <Button variant="outline" className="flex-1" onClick={() => setShowPrivacy(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowPrivacy(false)}
+              data-testid="button-privacy-close"
+            >
               Cerrar
             </Button>
           </div>
