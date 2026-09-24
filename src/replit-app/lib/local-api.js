@@ -440,6 +440,21 @@ function bearerUser(store, headers) {
   return store.users.find((user) => user.id === userId) || null;
 }
 
+function configuredAdminPassword() {
+  const configured = import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS;
+  if (typeof configured !== "string") return "";
+  return configured.trim();
+}
+
+function adminTokenFromRequest(store, headers) {
+  const auth = headers.get("Authorization") || headers.get("authorization") || "";
+  const bearer = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const stored = localStorage.getItem("adminToken") || "";
+  if (bearer && store.adminTokens[bearer]) return bearer;
+  if (stored && store.adminTokens[stored]) return stored;
+  return "";
+}
+
 function publicUser(user) {
   if (!user) return null;
   const { password: _password, ...rest } = user;
@@ -592,13 +607,20 @@ async function handleApi(method, url, init = {}) {
     return jsonResponse(publicUser(found));
   }
   if (params && method === "PATCH") {
+    if (!user || user.id !== params.id) {
+      return jsonResponse({ message: "No autorizado" }, 401);
+    }
     const found = store.users.find((candidate) => candidate.id === params.id);
     if (!found) return jsonResponse({ message: "Usuario no encontrado" }, 404);
-    Object.assign(found, body);
-    if (body.firstName) found.nombre = body.firstName;
-    if (body.lastName) found.apellido = body.lastName;
-    if (body.nombre) found.firstName = body.nombre;
-    if (body.apellido) found.lastName = body.apellido;
+    const updates = { ...body };
+    for (const key of ["password", "id", "role", "isActive", "partnerId", "connectionCode", "email"]) {
+      delete updates[key];
+    }
+    Object.assign(found, updates);
+    if (updates.firstName) found.nombre = updates.firstName;
+    if (updates.lastName) found.apellido = updates.lastName;
+    if (updates.nombre) found.firstName = updates.nombre;
+    if (updates.apellido) found.lastName = updates.apellido;
     saveStore(store);
     return jsonResponse(publicUser(found));
   }
@@ -1138,23 +1160,31 @@ async function handleApi(method, url, init = {}) {
   }
 
   if (method === "POST" && path === "/api/demo/seed") {
+    const adminToken = adminTokenFromRequest(store, headers);
+    if (!adminToken) return jsonResponse({ message: "No autorizado" }, 401);
+    const adminEmail = store.adminTokens[adminToken];
     const seeded = seedStore();
+    seeded.adminTokens[adminToken] = adminEmail;
     saveStore(seeded);
     return jsonResponse({ ok: true, users: seeded.users.length });
   }
 
   if (method === "DELETE" && path === "/api/demo/clean") {
+    const adminToken = adminTokenFromRequest(store, headers);
+    if (!adminToken) return jsonResponse({ message: "No autorizado" }, 401);
+    const adminEmail = store.adminTokens[adminToken];
     const seeded = seedStore();
     seeded.moodEntries = [];
     seeded.scheduledActivities = [];
+    seeded.adminTokens[adminToken] = adminEmail;
     saveStore(seeded);
     return jsonResponse({ ok: true });
   }
 
   if (method === "POST" && path === "/api/admin/login") {
-    const adminPass = import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS || "MeWeAdmin2026!";
+    const adminPass = configuredAdminPassword();
     const emailOk = String(body.email || "").includes("@");
-    const passOk = body.password === adminPass || body.password === DEMO_PASSWORD;
+    const passOk = adminPass.length > 0 && body.password === adminPass;
     if (!emailOk || !passOk) return jsonResponse({ message: "Credenciales incorrectas" }, 401);
     const token = uid("adm");
     store.adminTokens[token] = body.email;
@@ -1162,7 +1192,17 @@ async function handleApi(method, url, init = {}) {
     return jsonResponse({ token, admin: { email: body.email, nombre: "Facilitadora" } });
   }
 
+  if (method === "POST" && path === "/api/admin/logout") {
+    const token = adminTokenFromRequest(store, headers);
+    if (token) delete store.adminTokens[token];
+    saveStore(store);
+    return jsonResponse({ ok: true });
+  }
+
   if (path.startsWith("/api/admin/")) {
+    if (!adminTokenFromRequest(store, headers)) {
+      return jsonResponse({ message: "No autorizado" }, 401);
+    }
     if (method === "GET" && path === "/api/admin/users") return jsonResponse(store.users.map(publicUser));
     if (method === "GET" && path === "/api/admin/mood-entries") return jsonResponse(store.moodEntries);
     if (method === "GET" && path === "/api/admin/bot-interactions") return jsonResponse(store.botInteractions);

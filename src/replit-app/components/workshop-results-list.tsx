@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { adminAuthHeaders } from "@/lib/queryClient";
 import { 
   Loader2, 
   Edit, 
@@ -60,7 +61,9 @@ export default function WorkshopResultsList({ onEdit }: WorkshopResultsListProps
   const { data: results, isLoading, error } = useQuery<WorkshopResult[]>({
     queryKey: ["/api/admin/workshop/results"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/workshop/results");
+      const response = await fetch("/api/admin/workshop/results", {
+        headers: adminAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error("Error fetching workshop results");
       }
@@ -73,6 +76,7 @@ export default function WorkshopResultsList({ onEdit }: WorkshopResultsListProps
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/admin/workshop/results/${id}`, {
         method: "DELETE",
+        headers: adminAuthHeaders(),
       });
       if (!response.ok) {
         throw new Error("Error deleting workshop result");

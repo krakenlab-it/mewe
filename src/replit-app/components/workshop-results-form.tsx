@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { adminAuthHeaders } from "@/lib/queryClient";
 import { Loader2, Save, FileText, Users, Calendar, MapPin } from "lucide-react";
 
 // Esquema de validación para resultados de talleres
@@ -86,9 +87,7 @@ export default function WorkshopResultsForm({
       
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: adminAuthHeaders(true),
         body: JSON.stringify(data),
       });
 

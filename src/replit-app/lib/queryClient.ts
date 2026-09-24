@@ -7,6 +7,14 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+export function adminAuthHeaders(json = false): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const token = localStorage.getItem("adminToken");
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (json) headers["Content-Type"] = "application/json";
+  return headers;
+}
+
 export async function apiRequest(
   methodOrUrl: string,
   urlOrMethod?: string,

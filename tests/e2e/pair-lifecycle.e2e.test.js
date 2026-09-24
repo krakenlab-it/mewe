@@ -223,40 +223,31 @@ describe("pair lifecycle against local Supabase DB", () => {
     ).rejects.toThrow(/not authorized|Not authorized/i);
   });
 
-  it("rejects invalid pair codes with a readable error", async () => {
+  it("rejects invalid pair codes, stores the failure, and rate-limits the session", async () => {
     const stranger = await signInAnonymous();
     const badCode = uniquePairCode("ZZ");
-    await expect(
-      rpc(stranger.client, "claim_pair_access", {
-        p_pair_code: badCode,
-        p_role: "daughter",
-      }),
-    ).rejects.toThrow(/not found|Pair code/i);
-
-    // Failed-path inserts in claim_pair_access are rolled back with the raised
-    // exception (same transaction), so we verify the table can store failed rows
-    // via service-role SQL and that successful attempts still persist above.
-    const { execFileSync } = await import("node:child_process");
-    execFileSync(
-      "supabase",
-      [
-        "db",
-        "query",
-        "--local",
-        `
-          insert into public.pair_access_attempts
-            (auth_user_id, pair_code, role_requested, success, failure_reason)
-          values
-            ('${stranger.user.id}'::uuid, '${badCode}', 'daughter', false, 'pair_not_found');
-        `,
-      ],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    );
+    const message = await rpc(stranger.client, "claim_pair_access", {
+      p_pair_code: badCode,
+      p_role: "daughter",
+    });
+    expect(message).toMatch(/not found|Pair code/i);
 
     const attempts = await getAccessAttempts(badCode);
-    expect(attempts.length).toBeGreaterThan(0);
-    expect(attempts[0].success).toBe(false);
-    expect(attempts[0].failure_reason).toBe("pair_not_found");
+    expect(attempts.some((attempt) => attempt.success === false && attempt.failure_reason === "pair_not_found")).toBe(true);
+
+    for (let attempt = 0; attempt < 9; attempt += 1) {
+      const miss = await rpc(stranger.client, "claim_pair_access", {
+        p_pair_code: uniquePairCode("RL"),
+        p_role: "daughter",
+      });
+      expect(miss).toMatch(/not found|Pair code/i);
+    }
+
+    const limited = await rpc(stranger.client, "claim_pair_access", {
+      p_pair_code: uniquePairCode("RL"),
+      p_role: "daughter",
+    });
+    expect(limited).toMatch(/Too many failed access attempts/i);
   });
 });
 

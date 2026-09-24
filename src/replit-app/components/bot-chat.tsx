@@ -446,7 +446,7 @@ export default function BotChat({ userId, currentMood }: BotChatProps) {
               )}
 
               {/* New Activities Generated Button */}
-              {msg.hasNActivities && (
+              {msg.hasNewActivities && (
                 <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
                   <p className="text-xs font-semibold text-purple-800 mb-2">✨ Nuevas actividades disponibles</p>
                   <p className="text-xs text-purple-600 mb-3">

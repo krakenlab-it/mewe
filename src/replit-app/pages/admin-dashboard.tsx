@@ -72,7 +72,14 @@ export default function AdminDashboard() {
     }
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+    }
     localStorage.removeItem("adminToken");
     toast({
       title: "Sesión cerrada",

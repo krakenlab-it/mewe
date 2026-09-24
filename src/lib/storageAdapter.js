@@ -1,8 +1,13 @@
 import { createSupabaseBrowserClient, backendMode, requiresSupabaseBackend } from "./supabaseClient";
 import { hasAdminSession, setAdminSession } from "./session";
 
+export function resolveConfiguredAdminPassword(configured) {
+  if (typeof configured !== "string") return "";
+  return configured.trim();
+}
+
 function getLocalAdminPass() {
-  return import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS || "mewe2026";
+  return resolveConfiguredAdminPassword(import.meta.env.VITE_MEWE_LOCAL_ADMIN_PASS);
 }
 
 export class StorageBootstrapError extends Error {
@@ -48,7 +53,7 @@ function createLocalStorageAdapter() {
     claimPairAccess: async () => {},
     startFreshAnonymousSession: async () => {},
     loginAdmin: async (_email, password) => {
-      if (password !== localAdminPass) throw new Error("Contraseña incorrecta");
+      if (!localAdminPass || password !== localAdminPass) throw new Error("Contraseña incorrecta");
       setAdminSession(true);
     },
     isAdminSession: async () => hasAdminSession(),
@@ -97,7 +102,12 @@ function createSupabaseStorageAdapter(client) {
     },
     claimPairAccess: async (codigo, rol) => {
       const map = { madre: "mother", hija: "daughter" };
-      await rpc("claim_pair_access", { p_pair_code: codigo, p_role: map[rol] || rol });
+      const result = await rpc("claim_pair_access", { p_pair_code: codigo, p_role: map[rol] || rol });
+      // claim_pair_access returns text instead of raising, so the failed-attempt
+      // row can commit. A non-empty string is the failure message.
+      if (typeof result === "string" && result.trim()) {
+        throw new Error(result.trim());
+      }
     },
     startFreshAnonymousSession: async () => {
       await startFreshAnonymousSession(client);

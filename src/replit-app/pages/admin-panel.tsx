@@ -48,13 +48,25 @@ export default function AdminPanel() {
     }
   }, [setLocation]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+    }
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
     setLocation("/admin/login");
   };
 
-  const adminUser = JSON.parse(localStorage.getItem("adminUser") || "null");
+  let adminUser = null;
+  try {
+    adminUser = JSON.parse(localStorage.getItem("adminUser") || "null");
+  } catch {
+    adminUser = null;
+  }
 
   // Query para obtener conexiones demo
   const { data: connectionsData, isLoading, refetch } = useQuery<ConnectionsResponse>({

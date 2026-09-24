@@ -29,6 +29,8 @@ VITE_MEWE_BACKEND_MODE=local
 VITE_MEWE_LOCAL_ADMIN_PASS=your-dev-password
 ```
 
+Local admin login stays closed until `VITE_MEWE_LOCAL_ADMIN_PASS` is set. The app does not ship a default admin password.
+
 ## Deploy to Vercel
 
 1. Connect the repository to Vercel and set these environment variables:
