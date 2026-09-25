@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installLocalApi, STORE_KEY } from "./replit-app/lib/local-api";
 
 describe("Replit local API adapter", () => {
@@ -10,6 +10,7 @@ describe("Replit local API adapter", () => {
 
   afterEach(() => {
     localStorage.clear();
+    vi.unstubAllEnvs();
   });
 
   it("logs in the seeded demo mother and returns a token", async () => {
@@ -84,5 +85,93 @@ describe("Replit local API adapter", () => {
     const generated = await apiRequest("POST", `/api/users/${login.user.id}/generate-connection-code`);
     expect(generated.connectionCode).toMatch(/^MEWE-/);
     expect((await generated.json()).connectionCode).toBe(generated.connectionCode);
+  });
+
+  it("refuses admin data, built-in passwords, and cross-user profile edits", async () => {
+    const openAdmin = await fetch("/api/admin/users");
+    expect(openAdmin.status).toBe(401);
+
+    for (const password of ["MeWeDemo2026!", "MeWeAdmin2026!", "mewe2026"]) {
+      const rejected = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "facilitadora@mewe.test", password }),
+      });
+      expect(rejected.status).toBe(401);
+    }
+
+    const wiped = await fetch("/api/demo/clean", { method: "DELETE" });
+    expect(wiped.status).toBe(401);
+
+    vi.stubEnv("VITE_MEWE_LOCAL_ADMIN_PASS", "local-admin-secret");
+    const login = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "facilitadora@mewe.test", password: "local-admin-secret" }),
+    });
+    expect(login.status).toBe(200);
+    const { token } = await login.json();
+    const users = await fetch("/api/admin/users", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(users.ok).toBe(true);
+
+    const seed = await fetch("/api/demo/seed", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(seed.ok).toBe(true);
+    const stillAdmin = await fetch("/api/admin/users", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(stillAdmin.ok).toBe(true);
+
+    const demo = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "demo@mewe.test", password: "MeWeDemo2026!" }),
+    });
+    const { user, token: userToken } = await demo.json();
+    const otherId = "278aac56-b6bf-4cf5-8978-7c04bbb6a22e";
+    const cross = await fetch(`/api/users/${otherId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({ nombre: "Hack" }),
+    });
+    expect(cross.status).toBe(401);
+
+    const escalate = await fetch(`/api/users/${user.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({
+        nombre: "María Segura",
+        role: "hija",
+        password: "stolen",
+        isActive: false,
+      }),
+    });
+    expect(escalate.ok).toBe(true);
+    const store = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+    const saved = store.users.find((candidate) => candidate.id === user.id);
+    expect(saved.nombre).toBe("María Segura");
+    expect(saved.role).toBe("madre");
+    expect(saved.password).toBe("MeWeDemo2026!");
+    expect(saved.isActive).not.toBe(false);
+
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const afterLogout = await fetch("/api/admin/users", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(afterLogout.status).toBe(401);
+    vi.unstubAllEnvs();
   });
 });

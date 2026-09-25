@@ -35,13 +35,14 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { error } = await supabase.rpc("claim_pair_access", {
+  const { data, error } = await supabase.rpc("claim_pair_access", {
     p_pair_code: pairCode,
     p_role: role,
   });
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  const failure = error?.message || (typeof data === "string" ? data.trim() : "");
+  if (failure) {
+    return new Response(JSON.stringify({ error: failure }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
