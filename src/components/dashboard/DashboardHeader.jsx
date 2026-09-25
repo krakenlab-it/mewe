@@ -1,3 +1,5 @@
+import { BackNav } from "../ui";
+
 export function DashboardHeader({
   nombre,
   subtitle,
@@ -6,9 +8,15 @@ export function DashboardHeader({
   onStartTest,
   onViewReport,
   onViewComparative,
+  onBack,
 }) {
   return (
     <header className="dashboard-header">
+      {onBack ? (
+        <nav className="dashboard-header-back" aria-label="Navegación">
+          <BackNav onClick={onBack} />
+        </nav>
+      ) : null}
       <div className="dashboard-header-info">
         <div className="dashboard-avatar" aria-hidden="true">
           {nombre?.charAt(0)?.toUpperCase() || "?"}
