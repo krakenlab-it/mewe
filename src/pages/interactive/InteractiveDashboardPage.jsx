@@ -30,6 +30,7 @@ export function InteractiveDashboardPage({
   onGoCrisis,
   onGoPolicy,
   onNotify,
+  onBack,
 }) {
   const [section, setSection] = useState(initialSection);
   const [whatsappOpen, setWhatsappOpen] = useState(false);
@@ -195,6 +196,7 @@ export function InteractiveDashboardPage({
         onStartTest={onStartTest}
         onViewReport={onViewReport}
         onViewComparative={rol === "madre" ? onViewComparative : undefined}
+        onBack={onBack}
         testProgress={{
           answered,
           total,

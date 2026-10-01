@@ -1,12 +1,12 @@
 import { Shell, TopBar } from "../components/ui";
 import { exportDuplasCsv } from "../lib/csvExport";
 
-export function AdminDashboardPage({ duplas, onRefresh, onOpenComparative, onDelete, onLogout }) {
+export function AdminDashboardPage({ duplas, onBack, onRefresh, onOpenComparative, onDelete, onLogout }) {
   const completed = duplas.filter((d) => d.madre?.completado && d.hija?.completado).length;
 
   return (
     <Shell wide>
-      <TopBar title="Dashboard Me We · admin" onLogout={onLogout} />
+      <TopBar title="Dashboard Me We · admin" onBack={onBack} onLogout={onLogout} />
       <div className="stats-grid" aria-label="Resumen del dashboard">
         <div className="stat">
           <span>Total duplas</span>

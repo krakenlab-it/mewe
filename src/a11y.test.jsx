@@ -16,7 +16,7 @@ describe("accessibility", () => {
 
   it("role page has no detectable axe violations", async () => {
     const { container } = render(
-      <RolePage onMother={() => {}} onDaughter={() => {}} onAdmin={() => {}} />,
+      <RolePage onMother={() => {}} onDaughter={() => {}} onAdmin={() => {}} onBack={() => {}} />,
     );
     expect(await axe(container)).toHaveNoViolations();
   });

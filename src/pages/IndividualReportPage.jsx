@@ -54,7 +54,7 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
           <p>{safeCuadrante.desc}</p>
         </div>
         <div className="chart">
-          <RadarIndividual indices={persona.indices || {}} label={persona.nombre || rol} color={rol === "madre" ? "#C0573C" : "#7A8C5D"} />
+          <RadarIndividual indices={persona.indices || {}} label={persona.nombre || rol} color={rol === "madre" ? "#C8453C" : "#1F8A79"} />
         </div>
         {safeCards.map((dim) => <IndexCard key={dim.key} dim={dim} />)}
       </div>
@@ -62,7 +62,6 @@ export function IndividualReportPage({ persona, rol, cards, cuadrante, onBack, o
         <button type="button" onClick={handleDownloadPdf} disabled={downloading} aria-busy={downloading}>
           {downloading ? "Generando PDF..." : "Descargar PDF"}
         </button>
-        <button type="button" onClick={onBack}>Volver</button>
       </div>
     </Shell>
   );

@@ -38,4 +38,26 @@ describe("interactive dashboard a11y", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
+
+  it("shows top-left Volver when onBack is provided", () => {
+    const dupla = nuevaDuplaVacia();
+    dupla.madre.nombre = "Ana";
+    dupla.codigo = "ABC123";
+    const { getByRole } = render(
+      <InteractiveDashboardPage
+        dupla={dupla}
+        rol="madre"
+        onSave={async () => {}}
+        onLogout={() => {}}
+        onStartTest={() => {}}
+        onViewReport={() => {}}
+        onViewComparative={() => {}}
+        onGoCrisis={() => {}}
+        onGoPolicy={() => {}}
+        onBack={() => {}}
+      />,
+    );
+    expect(getByRole("navigation", { name: "Navegación" })).toBeInTheDocument();
+    expect(getByRole("button", { name: "Volver" })).toBeInTheDocument();
+  });
 });

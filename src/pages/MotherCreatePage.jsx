@@ -3,7 +3,7 @@ import { MOTHER_CONSENT_PARAGRAPHS } from "../data/content";
 
 export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <PageHeader
         eyebrow="Crear dupla"
         title="Vamos a crear tu cuenta"
@@ -63,7 +63,6 @@ export function MotherCreatePage({ form, setForm, onSubmit, onBack }) {
       </ConsentBox>
       <div className="actions">
         <button onClick={onSubmit}>Crear cuenta y código de dupla</button>
-        <button className="ghost" onClick={onBack}>Volver</button>
       </div>
     </Shell>
   );

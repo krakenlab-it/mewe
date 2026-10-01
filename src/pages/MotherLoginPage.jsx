@@ -2,7 +2,7 @@ import { Field, Shell } from "../components/ui";
 
 export function MotherLoginPage({ code, setCode, onSubmit, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <h2>Retomar tu sesión</h2>
       <Field label="Código de dupla">
         <input
@@ -13,7 +13,6 @@ export function MotherLoginPage({ code, setCode, onSubmit, onBack }) {
         />
       </Field>
       <button onClick={onSubmit}>Entrar</button>
-      <button className="ghost" onClick={onBack}>Volver</button>
     </Shell>
   );
 }

@@ -18,7 +18,7 @@ export async function downloadElementAsPdf(elementId, filename, button = null, {
     }
 
     const canvas = await html2canvas(element, {
-      backgroundColor: "#FBF5EE",
+      backgroundColor: "#F3F6FA",
       scale: 1.6,
       useCORS: true,
       logging: false,

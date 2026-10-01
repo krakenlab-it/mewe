@@ -2,7 +2,7 @@ import { Field, Shell } from "../components/ui";
 
 export function DaughterAccessPage({ code, setCode, onSubmit, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <h2>Hola 🌱</h2>
       <p>¿Tu mamá te pasó un código? Ingrésalo acá.</p>
       <Field label="Código que te pasó tu mamá">
@@ -14,7 +14,6 @@ export function DaughterAccessPage({ code, setCode, onSubmit, onBack }) {
         />
       </Field>
       <button onClick={onSubmit}>Entrar</button>
-      <button className="ghost" onClick={onBack}>Volver</button>
     </Shell>
   );
 }

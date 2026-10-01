@@ -99,7 +99,6 @@ export function ComparativeReportPage({ dupla, brechas, meta, onBack, onLogout, 
         <button type="button" onClick={handleDownloadPdf} disabled={downloading} aria-busy={downloading}>
           {downloading ? "Generando PDF..." : "Descargar PDF"}
         </button>
-        <button type="button" onClick={onBack}>Volver al dashboard</button>
       </div>
     </Shell>
   );

@@ -1,8 +1,8 @@
 import { Shell } from "../components/ui";
 
-export function MotherCodePage({ codigo, onContinue }) {
+export function MotherCodePage({ codigo, onContinue, onBack }) {
   return (
-    <Shell>
+    <Shell onBack={onBack}>
       <h2>Tu código de dupla 🌿</h2>
       <p>Compártelo con tu hija para que pueda entrar.</p>
       <div className="code">{codigo}</div>
