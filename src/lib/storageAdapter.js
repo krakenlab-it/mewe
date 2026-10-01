@@ -1,5 +1,10 @@
 import { createSupabaseBrowserClient, backendMode, requiresSupabaseBackend } from "./supabaseClient";
 import { hasAdminSession, setAdminSession } from "./session";
+import {
+  trackAuthFailure,
+  trackPairClaimFailure,
+  trackRpcFailure,
+} from "./observability";
 
 export function resolveConfiguredAdminPassword(configured) {
   if (typeof configured !== "string") return "";
@@ -79,7 +84,9 @@ function createSupabaseStorageAdapter(client) {
   const rpc = async (fn, args = {}) => {
     const { data, error } = await client.rpc(fn, args);
     if (error) {
-      throw new Error(extractErrorMessage(error));
+      const message = extractErrorMessage(error);
+      trackRpcFailure(fn, { message });
+      throw new Error(message);
     }
     return data;
   };
@@ -106,6 +113,7 @@ function createSupabaseStorageAdapter(client) {
       // claim_pair_access returns text instead of raising, so the failed-attempt
       // row can commit. A non-empty string is the failure message.
       if (typeof result === "string" && result.trim()) {
+        trackPairClaimFailure(codigo, { message: result.trim() });
         throw new Error(result.trim());
       }
     },
@@ -115,9 +123,13 @@ function createSupabaseStorageAdapter(client) {
     loginAdmin: async (email, password) => {
       if (!email) throw new Error("Falta el email de la facilitadora");
       const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw new Error("Credenciales inválidas");
+      if (error) {
+        trackAuthFailure("loginAdmin", { message: error.message });
+        throw new Error("Credenciales inválidas");
+      }
       const admin = await rpc("is_facilitator_admin");
       if (!admin) {
+        trackAuthFailure("loginAdmin", { message: "missing facilitator_admin role" });
         await client.auth.signOut();
         throw new Error("Este usuario no tiene rol de facilitadora admin.");
       }
@@ -165,6 +177,7 @@ export async function createStorageAdapter() {
     await ensureAnonymousSession(client);
     return { storage: createSupabaseStorageAdapter(client), client };
   } catch (error) {
+    trackAuthFailure("anonymous_bootstrap", { message: extractErrorMessage(error) });
     if (mustUseSupabase) {
       throw new StorageBootstrapError(
         extractErrorMessage(error) || "No pudimos conectar con Supabase. Intenta de nuevo más tarde.",

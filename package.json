@@ -19,7 +19,8 @@
     "supabase:start": "supabase start -x studio,imgproxy,inbucket,realtime,storage,edge-runtime,functions,vector,analytics",
     "supabase:stop": "supabase stop --no-backup",
     "supabase:env": "./scripts/export-supabase-env.sh",
-    "test:e2e:local": "npm run supabase:start && eval \"$(./scripts/export-supabase-env.sh)\" && npm run test:e2e"
+    "test:e2e:local": "npm run supabase:start && eval \"$(./scripts/export-supabase-env.sh)\" && npm run test:e2e",
+    "smoke:deploy": "node scripts/post-deploy-smoke.mjs"
   },
   "keywords": [
     "vite",
