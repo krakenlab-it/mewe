@@ -37,6 +37,7 @@ import {
 } from "./lib/scoring";
 import { clearSession, getSavedSession, saveSession, setAdminSession } from "./lib/session";
 import { createStorageAdapter } from "./lib/storageAdapter";
+import { trackError } from "./lib/observability";
 import { getScreenTitle } from "./lib/screenMeta";
 import { LoadingState, ScreenAnnouncer, Shell } from "./components/ui";
 import { useAccessibleDialog } from "./hooks/useAccessibleDialog";
@@ -87,6 +88,7 @@ export default function App() {
         adapterPayload = await createStorageAdapter();
       } catch (error) {
         if (disposed) return;
+        trackError(error, { source: "bootstrap" });
         setBootError(error.message || "No pudimos iniciar la plataforma.");
         setScreen("boot_error");
         return;

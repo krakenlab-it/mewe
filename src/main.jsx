@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import { installLocalApi } from "./replit-app/lib/local-api";
+import { installGlobalErrorHandlers } from "./lib/observability";
 import "./replit-app/index.css";
+
+installGlobalErrorHandlers();
 
 installLocalApi();
 

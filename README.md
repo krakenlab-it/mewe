@@ -80,6 +80,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs:
 1. **Quality** — `lint`, unit tests, production `build`
 2. **Supabase local DB e2e** — `supabase/setup-cli`, `supabase start`, schema lint, then e2e tests that write/read real rows in the local Postgres (pairs, participants, responses, indices, comparative reports, access attempts, admin audit)
 
+After CI passes on `main`, `.github/workflows/deploy.yml` deploys Supabase migrations + edge functions and the Vercel frontend, then runs post-deploy smoke checks. See [`docs/backend/deploy-pipeline.md`](docs/backend/deploy-pipeline.md) for required GitHub secrets and environment setup.
+
+Client and database observability guidance lives in [`docs/backend/observability.md`](docs/backend/observability.md).
+
 ### Local e2e (Docker required)
 
 ```bash
